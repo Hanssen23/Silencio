@@ -11,7 +11,7 @@
                         <h2 class="text-3xl font-bold" style="color: #000000;">Plan Types</h2>
                         <div class="flex items-center space-x-2">
                             <div id="realtime-indicator" class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                            <span class="text-sm text-gray-600">Live Updates</span>
+                            <span class="text-sm text-gray-600">Real-time</span>
                         </div>
                     </div>
 
@@ -207,25 +207,99 @@
             // Update the plans display with real-time data
             const plansContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
             if (plansContainer) {
-                // Trigger a page refresh to show updated data
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // Fetch fresh data and update DOM without page reload
+                fetch('{{ route("employee.membership-plans.all") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.plans) {
+                            plans = data.plans;
+                            renderPlans(plans);
+                            showNotification('Plans updated in real-time', 'success');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating plans:', error);
+                        // Fallback to page reload
+                        setTimeout(() => window.location.reload(), 1000);
+                    });
             }
         }
 
+        function renderPlans(plansData) {
+            const plansContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
+            if (!plansContainer) return;
+
+            const plansHTML = plansData.map(plan => `
+                <div class="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold" style="color: #000000;">${plan.name}</h3>
+                        ${plan.name === 'VIP' || plan.name === 'Premium' ? 
+                            `<span class="px-4 py-2 text-sm font-medium rounded-full" style="background-color: #F59E0B; color: #000000;">
+                                ₱${parseFloat(plan.price).toFixed(2)}/month
+                            </span>` :
+                            `<span class="px-4 py-2 text-sm font-medium rounded-full" style="background-color: #059669; color: #000000;">
+                                ₱${parseFloat(plan.price).toFixed(2)}/month
+                            </span>`
+                        }
+                    </div>
+                    <p class="mb-6 leading-relaxed" style="color: #6B7280;">${plan.description}</p>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
+                            <span class="text-sm" style="color: #374151;">Monthly:</span>
+                            <span class="font-semibold" style="color: #000000;">₱${parseFloat(plan.price).toFixed(2)}</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
+                            <span class="text-sm" style="color: #374151;">Quarterly:</span>
+                            <span class="font-semibold" style="color: #000000;">₱${(parseFloat(plan.price) * 3).toFixed(2)}</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
+                            <span class="text-sm" style="color: #374151;">Biannually:</span>
+                            <span class="font-semibold" style="color: #000000;">₱${(parseFloat(plan.price) * 6).toFixed(2)}</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
+                            <span class="text-sm" style="color: #374151;">Annually:</span>
+                            <span class="font-semibold" style="color: #000000;">₱${(parseFloat(plan.price) * 12).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <p class="text-xs" style="color: #6B7280;">Read-only view</p>
+                </div>
+            `).join('');
+
+            plansContainer.innerHTML = plansHTML;
+        }
+
         function updatePlanTypesDisplay() {
-            // Update plan types display
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            // Update plan types display with real-time data
+            fetch('{{ route("employee.membership-plans.plan-types") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        planTypes = data;
+                        showNotification('Plan types updated in real-time', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating plan types:', error);
+                    // Fallback to page reload
+                    setTimeout(() => window.location.reload(), 1000);
+                });
         }
 
         function updateDurationTypesDisplay() {
-            // Update duration types display
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            // Update duration types display with real-time data
+            fetch('{{ route("employee.membership-plans.duration-types") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        durationTypes = data;
+                        showNotification('Duration types updated in real-time', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating duration types:', error);
+                    // Fallback to page reload
+                    setTimeout(() => window.location.reload(), 1000);
+                });
         }
 
         // Update real-time indicator status

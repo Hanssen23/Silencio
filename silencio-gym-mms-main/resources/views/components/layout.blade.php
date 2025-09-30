@@ -29,6 +29,8 @@
         <script src="{{ asset('js/dropdown.js') }}"></script>
         <!-- Sidebar JavaScript -->
         <script src="{{ asset('js/sidebar.js') }}"></script>
+        <!-- Real-time Features JavaScript -->
+        <script src="{{ asset('js/realtime.js') }}"></script>
         
         <!-- Mobile Sidebar Toggle Script -->
         <script>

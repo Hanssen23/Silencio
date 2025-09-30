@@ -710,15 +710,21 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex items-center space-x-4">
-                            <button onclick="toggleAccountStatus(${account.id})" class="text-green-600 hover:text-green-900" style="color: ${isActive ? '#DC2626' : '#059669'}; font-size: 0.875rem; font-weight: 500;">
-                                ${isActive ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button onclick="editAccount(${account.id})" class="text-blue-600 hover:text-blue-900" style="color: #2563EB; font-size: 0.875rem; font-weight: 500;">
-                                Edit
-                            </button>
-                            <button onclick="deleteAccount(${account.id})" class="text-red-600 hover:text-red-900" style="color: #DC2626; font-size: 0.875rem; font-weight: 500;">
-                                Delete
-                            </button>
+                            ${account.role === 'admin' ? `
+                                <button onclick="editAccount(${account.id})" class="text-blue-600 hover:text-blue-900" style="color: #2563EB; font-size: 0.875rem; font-weight: 500;">
+                                    Edit
+                                </button>
+                            ` : `
+                                <button onclick="toggleAccountStatus(${account.id})" class="text-green-600 hover:text-green-900" style="color: ${isActive ? '#DC2626' : '#059669'}; font-size: 0.875rem; font-weight: 500;">
+                                    ${isActive ? 'Deactivate' : 'Activate'}
+                                </button>
+                                <button onclick="editAccount(${account.id})" class="text-blue-600 hover:text-blue-900" style="color: #2563EB; font-size: 0.875rem; font-weight: 500;">
+                                    Edit
+                                </button>
+                                <button onclick="deleteAccount(${account.id})" class="text-red-600 hover:text-red-900" style="color: #DC2626; font-size: 0.875rem; font-weight: 500;">
+                                    Delete
+                                </button>
+                            `}
                         </div>
                     </td>
                 `;

@@ -21,20 +21,23 @@ class MemberAuthController extends Controller
             $validated = $request->validate([
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
-                'email' => 'required|email|unique:members,email',
+                'email' => 'required|email|unique:members,email|unique:users,email',
                 'mobile_number' => 'required|string|regex:/^9\d{2}\s\d{3}\s\d{4}$/',
                 'password' => 'required|min:6|confirmed',
+                'accept_terms' => 'required|accepted',
             ], [
                 'first_name.required' => 'First name is required for member registration',
                 'last_name.required' => 'Last name is required for member registration',
                 'email.required' => 'Email is required for member registration',
                 'email.email' => 'Please enter a valid email address',
-                'email.unique' => 'This email is already registered as a member',
+                'email.unique' => 'This email is already registered',
                 'mobile_number.required' => 'Mobile number is required for member registration',
                 'mobile_number.regex' => 'Please enter a valid 10-digit Philippine mobile number (e.g., 912 345 6789)',
                 'password.required' => 'Password is required for member registration',
                 'password.min' => 'Password must be at least 6 characters for member registration',
                 'password.confirmed' => 'Password confirmation does not match',
+                'accept_terms.required' => 'You must accept the Terms and Conditions to register',
+                'accept_terms.accepted' => 'You must accept the Terms and Conditions to register',
             ]);
 
             // Clean mobile number (remove spaces and add +63 prefix)
@@ -60,6 +63,7 @@ class MemberAuthController extends Controller
                     'password' => Hash::make($validated['password']),
                     'status' => 'active',
                     'role' => 'member', // Explicitly assign member role
+                    'accepted_terms_at' => now(), // Record terms acceptance timestamp
                 ];
                 
                 $member = Member::create($payload);

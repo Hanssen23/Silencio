@@ -32,8 +32,9 @@
                     </div>
                 @endif
                 
-                <form method="POST" action="{{ route('login.post') }}" class="flex flex-col w-full max-w-xs sm:max-w-sm mx-auto">
+                <form method="POST" action="{{ route('login.post') }}" class="flex flex-col w-full max-w-xs sm:max-w-sm mx-auto" id="loginForm">
                     @csrf
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <div class="mb-3 sm:mb-4 lg:mb-5">
                         <label for="email" class="block mb-1 sm:mb-2 text-xs sm:text-sm font-medium text-gray-900">Your email</label>
                         <input type="email" id="email" name="email" value="{{ old('email') }}" class="bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 sm:p-3 lg:p-2.5 min-h-[40px] sm:min-h-[44px] shadow-sm" placeholder="name@example.com" required />
@@ -50,6 +51,43 @@
                     </div>
                     <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs sm:text-sm w-full px-4 sm:px-5 py-2 sm:py-3 lg:py-2.5 text-center min-h-[40px] sm:min-h-[44px]">Login</button>
                 </form>
+                
+                <!-- CSRF Token Refresh Script -->
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const form = document.getElementById('loginForm');
+                    const csrfInput = form.querySelector('input[name="_token"]');
+                    
+                    // Refresh CSRF token every 30 minutes
+                    setInterval(function() {
+                        fetch('/csrf-token')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.csrf_token) {
+                                    csrfInput.value = data.csrf_token;
+                                    // Update meta tag if it exists
+                                    const metaTag = document.querySelector('meta[name="csrf-token"]');
+                                    if (metaTag) {
+                                        metaTag.setAttribute('content', data.csrf_token);
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error refreshing CSRF token:', error);
+                            });
+                    }, 30 * 60 * 1000); // 30 minutes
+                    
+                    // Handle form submission
+                    form.addEventListener('submit', function(e) {
+                        // Ensure CSRF token is present
+                        if (!csrfInput.value) {
+                            e.preventDefault();
+                            alert('Session expired. Please refresh the page and try again.');
+                            window.location.reload();
+                        }
+                    });
+                });
+                </script>
             </div>
             <div class="hidden lg:flex lg:flex-2">
                 <img class="object-cover w-full h-full rounded-r-lg" src="{{ asset('images/gym-image.png') }}" alt="Gym Image">

@@ -19,6 +19,11 @@ class Payment extends Model
         'membership_start_date',
         'membership_expiration_date',
         'notes',
+        'tin',
+        'is_pwd',
+        'is_senior_citizen',
+        'discount_amount',
+        'discount_percentage',
     ];
 
     protected $casts = [
@@ -27,6 +32,10 @@ class Payment extends Model
         'membership_start_date' => 'date',
         'membership_expiration_date' => 'date',
         'amount' => 'decimal:2',
+        'is_pwd' => 'boolean',
+        'is_senior_citizen' => 'boolean',
+        'discount_amount' => 'decimal:2',
+        'discount_percentage' => 'decimal:2',
     ];
 
     public function member(): BelongsTo
@@ -101,5 +110,47 @@ class Payment extends Model
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Get the original amount before discount
+     */
+    public function getOriginalAmountAttribute(): float
+    {
+        return $this->amount + $this->discount_amount;
+    }
+
+    /**
+     * Get the final amount after discount
+     */
+    public function getFinalAmountAttribute(): float
+    {
+        return $this->amount;
+    }
+
+    /**
+     * Check if payment has any discount
+     */
+    public function hasDiscount(): bool
+    {
+        return $this->is_pwd || $this->is_senior_citizen;
+    }
+
+    /**
+     * Get discount description
+     */
+    public function getDiscountDescriptionAttribute(): string
+    {
+        $descriptions = [];
+        
+        if ($this->is_pwd) {
+            $descriptions[] = 'PWD';
+        }
+        
+        if ($this->is_senior_citizen) {
+            $descriptions[] = 'Senior Citizen';
+        }
+        
+        return implode(' + ', $descriptions);
     }
 }

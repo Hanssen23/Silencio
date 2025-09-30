@@ -129,7 +129,36 @@ class MemberDashboardController extends Controller
             ]);
         }
 
-        return redirect()->route('member.accounts')->with('success', 'Profile updated successfully!');
+        return redirect()->route('member.accounts')->with('success', 'Profile updated successfully!'); 
+    }
+
+    public function membershipPlans()
+    {
+        $plans = MembershipPlan::query()->orderBy('price')->get();
+        return response()->json(['plans' => $plans]);
+    }
+
+    public function membershipPlansStream()
+    {
+        return response()->stream(function () {
+            $plans = MembershipPlan::query()->orderBy('price')->get();
+            
+            echo "data: " . json_encode([
+                'plans' => $plans,
+                'plans_changed' => true,
+                'timestamp' => now()->toISOString()
+            ]) . "\n\n";
+            
+            if (connection_aborted()) {
+                return;
+            }
+            
+            flush();
+        }, 200, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'Connection' => 'keep-alive',
+        ]);
     }
 }
 

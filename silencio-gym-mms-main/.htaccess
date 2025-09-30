@@ -3,9 +3,9 @@
 # Enable URL Rewriting
 RewriteEngine On
 
-# Redirect to HTTPS (if SSL is enabled)
-RewriteCond %{HTTPS} off
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Redirect to HTTPS (disabled for development/testing on port 8001)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Handle Laravel Routes
 RewriteCond %{REQUEST_FILENAME} !-d

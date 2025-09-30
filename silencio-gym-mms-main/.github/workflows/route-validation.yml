@@ -1,0 +1,115 @@
+name: Route Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate-routes:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, dom, fileinfo, mysql, sqlite, pgsql
+        coverage: none
+    
+    - name: Copy .env
+      run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+    
+    - name: Install Dependencies
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+    
+    - name: Generate key
+      run: php artisan key:generate
+    
+    - name: Directory Permissions
+      run: chmod -R 777 storage bootstrap/cache
+    
+    - name: Create Database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+    
+    - name: Execute tests (Unit and Feature tests) via PHPUnit
+      run: php artisan test
+    
+    - name: Validate Routes
+      run: |
+        chmod +x scripts/validate-routes.sh
+        ./scripts/validate-routes.sh
+    
+    - name: Generate Route Map
+      run: php artisan routes:map
+    
+    - name: Upload Route Validation Report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: route-validation-report
+        path: |
+          storage/logs/route-validation-report.json
+          storage/route-documentation.md
+          storage/routes-map.json
+    
+    - name: Comment PR with Route Validation Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          let comment = '## 🔍 Route Validation Results\n\n';
+          
+          try {
+            const reportPath = 'storage/logs/route-validation-report.json';
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              
+              comment += `### Summary\n`;
+              comment += `- **Total Routes**: ${report.summary.total_defined_routes}\n`;
+              comment += `- **Referenced Routes**: ${report.summary.total_referenced_routes}\n`;
+              comment += `- **Missing Routes**: ${report.summary.missing_routes}\n`;
+              comment += `- **Unused Routes**: ${report.summary.unused_routes}\n\n`;
+              
+              if (report.summary.missing_routes > 0) {
+                comment += `### ❌ Missing Routes\n`;
+                report.missing_routes.forEach(route => {
+                  comment += `- \`${route.route}\` (${route.file})\n`;
+                });
+                comment += '\n';
+              }
+              
+              if (report.summary.unused_routes > 0) {
+                comment += `### ⚠️ Unused Routes\n`;
+                report.unused_routes.forEach(route => {
+                  comment += `- \`${route}\`\n`;
+                });
+                comment += '\n';
+              }
+              
+              if (report.summary.missing_routes === 0) {
+                comment += '✅ **All routes are valid!**\n';
+              } else {
+                comment += '❌ **Route validation failed. Please fix the missing routes.**\n';
+              }
+            } else {
+              comment += '⚠️ Route validation report not found.\n';
+            }
+          } catch (error) {
+            comment += `❌ Error reading route validation report: ${error.message}\n`;
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

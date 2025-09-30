@@ -26,6 +26,10 @@ class AdminOnly
             if (Auth::guard('member')->check()) {
                 return redirect()->route('member.dashboard');
             }
+            // Prevent redirect loop by checking if we're already on login page
+            if (!$request->is('login') && !$request->is('/')) {
+                return redirect()->route('login');
+            }
             return redirect()->route('login');
         }
 

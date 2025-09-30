@@ -80,12 +80,11 @@
                                 <label for="email" class="block text-sm font-medium mb-2" style="color: #6B7280;">
                                     Email
                                 </label>
-                                <input type="email" id="email" name="email" readonly
-                                       class="w-full px-4 py-3 border rounded-lg bg-gray-100 cursor-not-allowed" 
-                                       style="border-color: #E5E7EB; color: #6B7280;"
-                                       placeholder="Email cannot be edited"
+                                <input type="email" id="email" name="email" required
+                                       class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" 
+                                       style="border-color: #E5E7EB;"
+                                       placeholder="Enter email address"
                                        value="{{ old('email', $member->email) }}">
-                                <p class="text-xs mt-1" style="color: #6B7280;">Email cannot be modified for security reasons</p>
                             </div>
 
                             <!-- Mobile Number Field -->

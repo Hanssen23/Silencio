@@ -28,6 +28,7 @@ class Member extends Authenticatable
         'current_membership_period_id',
         'membership_starts_at',
         'membership_expires_at',
+        'accepted_terms_at',
         'current_plan_type',
         'current_duration_type',
     ];
@@ -35,6 +36,7 @@ class Member extends Authenticatable
     protected $casts = [
         'membership_starts_at' => 'date',
         'membership_expires_at' => 'date',
+        'accepted_terms_at' => 'datetime',
     ];
 
     /**
@@ -199,13 +201,17 @@ class Member extends Authenticatable
         if ($this->membership_expires_at === null) {
             return -1; // No expiration
         }
+        
         $expiresAt = Carbon::parse($this->membership_expires_at);
-        $daysLeft = $expiresAt->diffInDays(Carbon::now(), false);
+        $now = Carbon::now();
         
         // If membership is expired, return 0
-        if ($this->is_expired) {
+        if ($expiresAt->isPast()) {
             return 0;
         }
+        
+        // Calculate days remaining (positive number)
+        $daysLeft = $now->diffInDays($expiresAt, false);
         
         return max(0, (int) $daysLeft);
     }

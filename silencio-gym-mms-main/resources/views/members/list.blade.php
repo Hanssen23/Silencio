@@ -93,33 +93,33 @@
             <!-- Members Table -->
             <div class="bg-white rounded-lg border overflow-hidden" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y" style="border-color: #E5E7EB; min-width: 800px;">
+                    <table class="min-w-full divide-y" style="border-color: #E5E7EB; min-width: 1000px; table-layout: fixed;">
                         <thead style="background-color: #1E40AF;">
                             <tr>
-                                <th class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider">UID</th>
-                                <th class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider hidden sm:table-cell">MEMBER NUMBER</th>
-                                <th class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider">MEMBERSHIP</th>
-                                <th class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider">FULL NAME</th>
-                                <th class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider hidden md:table-cell">MOBILE NUMBER</th>
-                                <th class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider hidden sm:table-cell">EMAIL</th>
-                                <th class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider">ACTIONS</th>
+                                <th class="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider" style="width: 12%;">UID</th>
+                                <th class="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider" style="width: 15%;">MEMBER NUMBER</th>
+                                <th class="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider" style="width: 12%;">MEMBERSHIP</th>
+                                <th class="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider" style="width: 18%;">FULL NAME</th>
+                                <th class="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider" style="width: 15%;">MOBILE NUMBER</th>
+                                <th class="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider" style="width: 20%;">EMAIL</th>
+                                <th class="px-2 sm:px-3 py-2 sm:py-3 text-left text-xs sm:text-sm font-bold text-white uppercase tracking-wider" style="width: 8%;">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y" style="background-color: #FFFFFF; border-color: #E5E7EB;">
                             @forelse($members as $member)
                             <tr class="hover:bg-gray-50" style="background-color: {{ $loop->even ? '#F9FAFB' : '#FFFFFF' }};">
                                 <!-- UID Column -->
-                                <td class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 whitespace-nowrap text-xs sm:text-sm font-medium" style="color: #000000;">
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium" style="color: #000000;">
                                     {{ $member->uid }}
                                 </td>
                                 
                                 <!-- MEMBER NUMBER Column -->
-                                <td class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 whitespace-nowrap text-xs sm:text-sm hidden sm:table-cell" style="color: #000000;">
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm" style="color: #000000;">
                                     MEM{{ str_pad($member->id, 3, '0', STR_PAD_LEFT) }}
                                 </td>
                                 
                                 <!-- MEMBERSHIP Column -->
-                                <td class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 whitespace-nowrap text-xs sm:text-sm">
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">
                                     @php
                                         $currentPlan = $member->currentMembershipPeriod ? $member->currentMembershipPeriod->plan_type : null;
                                         $isActive = $member->currentMembershipPeriod && $member->currentMembershipPeriod->is_active;
@@ -174,27 +174,43 @@
                                 </td>
                                 
                                 <!-- FULL NAME Column -->
-                                <td class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 whitespace-nowrap text-xs sm:text-sm font-medium" style="color: #000000;">
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium" style="color: #000000;">
                                     {{ $member->first_name }} {{ $member->last_name }}
                                 </td>
                                 
                                 <!-- MOBILE NUMBER Column -->
-                                <td class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 whitespace-nowrap text-xs sm:text-sm hidden md:table-cell" style="color: #000000;">
-                                    {{ $member->mobile_number ? '+63 ' . $member->mobile_number : 'N/A' }}
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm" style="color: #000000;">
+                                    @if($member->mobile_number)
+                                        @php
+                                            // Remove any existing +63 prefix and clean the number
+                                            $cleanNumber = preg_replace('/^\+63\s*/', '', $member->mobile_number);
+                                            $cleanNumber = preg_replace('/\D/', '', $cleanNumber); // Remove non-digits
+                                            
+                                            // Format as +63 XXX XXX XXXX
+                                            if (strlen($cleanNumber) >= 10) {
+                                                $formatted = '+63 ' . substr($cleanNumber, 0, 3) . ' ' . substr($cleanNumber, 3, 3) . ' ' . substr($cleanNumber, 6);
+                                            } else {
+                                                $formatted = '+63 ' . $cleanNumber;
+                                            }
+                                        @endphp
+                                        {{ $formatted }}
+                                    @else
+                                        N/A
+                                    @endif
                                 </td>
                                 
                                 <!-- EMAIL Column -->
-                                <td class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 whitespace-nowrap text-xs sm:text-sm hidden sm:table-cell" style="color: #000000;">
-                                    {{ $member->email }}
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm" style="color: #000000; overflow: hidden; text-overflow: ellipsis;">
+                                    <span title="{{ $member->email }}">{{ $member->email }}</span>
                                 </td>
-                                <td class="px-2 sm:px-3 lg:px-6 py-2 sm:py-3 lg:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                                <td class="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-medium">
                                     <div class="flex items-center gap-2">
                                         <a href="{{ route('members.profile', $member->id) }}" class="text-yellow-600 hover:text-yellow-900 transition-colors duration-200" title="View Profile">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                             </svg>
                                         </a>
-                                        <a href="{{ route('members.edit', $member->id) }}" class="text-red-600 hover:text-red-900 transition-colors duration-200" title="Edit Member">
+                                        <a href="{{ route('members.edit', $member->id) }}" class="text-blue-600 hover:text-blue-900 transition-colors duration-200" title="Edit Member">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                             </svg>

@@ -209,8 +209,46 @@
 
                             <!-- Payment Form -->
                             <div class="space-y-4 sm:space-y-6">
+                                <!-- Discount Options -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h4 class="text-sm font-semibold mb-3" style="color: #1E40AF;">Discount Options</h4>
+                                    <div class="space-y-3">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="isPwd" name="is_pwd" value="1" 
+                                                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
+                                                   onchange="calculateDiscount()">
+                                            <span class="ml-2 text-sm font-medium" style="color: #374151;">PWD (Person With Disability) - 20% discount</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="isSeniorCitizen" name="is_senior_citizen" value="1" 
+                                                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
+                                                   onchange="calculateDiscount()">
+                                            <span class="ml-2 text-sm font-medium" style="color: #374151;">Senior Citizen - 20% discount</span>
+                                        </label>
+                                    </div>
+                                    <div id="discountInfo" class="mt-3 p-3 bg-green-50 border border-green-200 rounded hidden">
+                                        <div class="text-sm" style="color: #059669;">
+                                            <div id="discountBreakdown"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label class="block text-sm font-medium mb-3" style="color: #6B7280;">Payment Amount</label>
+                                    <label class="block text-sm font-medium mb-3" style="color: #6B7280;">Original Amount</label>
+                                    <input type="number" id="originalAmount" step="0.01" min="0" 
+                                           class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 min-h-[44px]" 
+                                           style="border-color: #E5E7EB;" readonly>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-3" style="color: #6B7280;">Discount Amount</label>
+                                    <input type="number" id="discountAmount" name="discount_amount" step="0.01" min="0" 
+                                           class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 min-h-[44px]" 
+                                           style="border-color: #E5E7EB;" readonly>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-3" style="color: #6B7280;">Final Payment Amount</label>
                                     <input type="number" id="paymentAmount" name="amount" step="0.01" min="0" 
                                            class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 min-h-[44px]" 
                                            style="border-color: #E5E7EB;" readonly>
@@ -224,14 +262,14 @@
                                 </div>
 
                                 <!-- Confirm Payment Button -->
-                                <button id="confirmPaymentBtn" onclick="confirmPayment()" 
+                                <button id="confirmPaymentBtn" onclick="showReceiptPreview()" 
                                         class="w-full py-3 sm:py-4 text-white font-semibold text-base sm:text-lg rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-3 min-h-[44px]" 
                                         style="background-color: #059669;" 
                                         onmouseover="this.style.backgroundColor='#047857'" 
                                         onmouseout="this.style.backgroundColor='#059669'" 
                                         disabled>
                                     <span class="text-lg sm:text-xl">💳</span>
-                                    <span class="text-sm sm:text-base">Confirm Payment & Activate Membership</span>
+                                    <span class="text-sm sm:text-base">Preview Receipt & Confirm Payment</span>
                                 </button>
                             </div>
                         </div>
@@ -254,7 +292,7 @@
                             <span class="text-xl mr-2">➕</span>
                             Process Another Payment
                         </button>
-                        <a href="{{ route('membership.payments') }}" 
+                        <a href="{{ route('membership.payments.index') }}" 
                            class="inline-flex items-center px-8 py-4 text-white rounded-lg transition-colors shadow-sm" 
                            style="background-color: #2563EB;" 
                            onmouseover="this.style.backgroundColor='#1D4ED8'" 
@@ -373,23 +411,226 @@
                 
                 const basePrice = planTypes[selectedPlanType].base_price;
                 const multiplier = durationTypes[selectedDurationType].multiplier;
-                const totalPrice = basePrice * multiplier;
+                const originalPrice = basePrice * multiplier;
                 
-                            document.getElementById('totalPrice').textContent = `₱${totalPrice.toFixed(2)}`;
+                // Set original amount
+                document.getElementById('originalAmount').value = originalPrice.toFixed(2);
+                
+                // Calculate discount
+                calculateDiscount();
+                
+                document.getElementById('totalPrice').textContent = `₱${originalPrice.toFixed(2)}`;
             document.getElementById('priceBreakdown').textContent = `${planTypes[selectedPlanType].name} (₱${basePrice}/month) × ${durationTypes[selectedDurationType].name} (${multiplier}x)`;
-                document.getElementById('paymentAmount').value = totalPrice.toFixed(2);
                 
                 // Enable confirm button
                 document.getElementById('confirmPaymentBtn').disabled = false;
             }
         }
 
-        function confirmPayment() {
+        function calculateDiscount() {
+            const originalAmount = parseFloat(document.getElementById('originalAmount').value) || 0;
+            const isPwd = document.getElementById('isPwd').checked;
+            const isSeniorCitizen = document.getElementById('isSeniorCitizen').checked;
+            
+            let discountPercentage = 0;
+            let discountDescriptions = [];
+            
+            if (isPwd) {
+                discountPercentage += 20;
+                discountDescriptions.push('PWD (20%)');
+            }
+            
+            if (isSeniorCitizen) {
+                discountPercentage += 20;
+                discountDescriptions.push('Senior Citizen (20%)');
+            }
+            
+            const discountAmount = (originalAmount * discountPercentage) / 100;
+            const finalAmount = originalAmount - discountAmount;
+            
+            // Update discount fields
+            document.getElementById('discountAmount').value = discountAmount.toFixed(2);
+            document.getElementById('paymentAmount').value = finalAmount.toFixed(2);
+            
+            // Show/hide discount info
+            const discountInfo = document.getElementById('discountInfo');
+            const discountBreakdown = document.getElementById('discountBreakdown');
+            
+            if (discountPercentage > 0) {
+                discountInfo.classList.remove('hidden');
+                discountBreakdown.innerHTML = `
+                    <strong>Discount Applied:</strong> ${discountDescriptions.join(' + ')}<br>
+                    <strong>Total Discount:</strong> ${discountPercentage}% (₱${discountAmount.toFixed(2)})<br>
+                    <strong>Final Amount:</strong> ₱${finalAmount.toFixed(2)}
+                `;
+            } else {
+                discountInfo.classList.add('hidden');
+            }
+        }
+
+        function showReceiptPreview() {
             if (!selectedMember || !selectedPlanType || !selectedDurationType) {
                 alert('Please select all required fields');
                 return;
             }
 
+            const planTypes = @json(config('membership.plan_types'));
+            const durationTypes = @json(config('membership.duration_types'));
+            const originalAmount = parseFloat(document.getElementById('originalAmount').value) || 0;
+            const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const finalAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+            const isPwd = document.getElementById('isPwd').checked;
+            const isSeniorCitizen = document.getElementById('isSeniorCitizen').checked;
+            const startDate = document.getElementById('startDate').value;
+            const notes = document.querySelector('textarea[name="notes"]').value;
+
+            // Calculate expiration date
+            const start = new Date(startDate);
+            const durationDays = durationTypes[selectedDurationType].days;
+            const expiration = new Date(start.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto" style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+                    <!-- Modal Header -->
+                    <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Payment Receipt</h3>
+                        <button onclick="closeReceiptPreview()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Receipt Content -->
+                    <div class="p-6">
+                        <!-- Header Section -->
+                        <div class="text-center mb-6">
+                            <img src="{{ asset('images/rba-logo/rba logo.png') }}" alt="RBA Logo" class="w-24 h-auto mx-auto mb-4" style="width: 100px; height: auto;">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Ripped Body Anytime</h2>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Block 7 Lot 2 Sto. Tomas Village,<br>
+                                Brgy. 168 Deparo, City of Caloocan,<br>
+                                Caloocan, Philippines, 1400
+                            </p>
+                            <div class="mt-4">
+                                <p class="text-xs text-gray-500 uppercase tracking-wide">Payment Receipt</p>
+                                <p class="text-sm font-semibold text-gray-700">Receipt #Preview</p>
+                            </div>
+                        </div>
+
+                        <!-- Payment Details Section -->
+                        <div class="mb-6">
+                            <h4 class="text-sm font-semibold text-gray-900 mb-3">Payment Details</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Payment ID:</span>
+                                    <span class="font-medium text-gray-900">#Preview</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Date:</span>
+                                    <span class="font-medium text-gray-900">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Time:</span>
+                                    <span class="font-medium text-gray-900">${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Payment Method:</span>
+                                    <span class="font-medium text-gray-900">Cash</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Membership Details Section -->
+                        <div class="mb-6">
+                            <h4 class="text-sm font-semibold text-gray-900 mb-3">Membership Details</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Plan Type:</span>
+                                    <span class="font-medium text-gray-900">${planTypes[selectedPlanType].name}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Duration:</span>
+                                    <span class="font-medium text-gray-900">${durationTypes[selectedDurationType].name}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Start Date:</span>
+                                    <span class="font-medium text-gray-900">${new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Expiration Date:</span>
+                                    <span class="font-medium text-gray-900">${expiration.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Summary Section -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="space-y-2">
+                                ${originalAmount !== finalAmount ? `
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600">Original Amount:</span>
+                                        <span class="font-medium text-gray-900">₱${originalAmount.toFixed(2)}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm text-red-600">
+                                        <span>Discount (${isPwd && isSeniorCitizen ? 'PWD + Senior Citizen' : isPwd ? 'PWD' : 'Senior Citizen'}):</span>
+                                        <span class="font-medium">-₱${discountAmount.toFixed(2)}</span>
+                                    </div>
+                                ` : ''}
+                                <div class="flex justify-between text-sm font-semibold">
+                                    <span class="text-gray-900">Total:</span>
+                                    <span class="text-green-600">₱${finalAmount.toFixed(2)}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Amount Received:</span>
+                                    <span class="font-medium text-gray-900">₱${finalAmount.toFixed(2)}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Change:</span>
+                                    <span class="font-medium text-gray-900">₱0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${notes ? `
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Notes:</span>
+                                    <span class="font-medium text-gray-900 text-right max-w-xs">${notes}</span>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Footer -->
+                        <div class="mt-6 pt-4 border-t border-gray-200 text-center">
+                            <p class="text-sm text-gray-600 mb-2">Cashier Name: Admin User</p>
+                            <p class="text-sm font-medium text-gray-900 mb-2">Thank you for choosing Ripped Body Anytime!</p>
+                            <p class="text-xs text-gray-500">Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex justify-end p-6 border-t border-gray-200 bg-gray-50">
+                        <button onclick="processPayment()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            Confirm Payment & Activate Membership
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function closeReceiptPreview() {
+            const modal = document.querySelector('.fixed.inset-0');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function processPayment() {
             const formData = {
                 member_id: selectedMember.id,
                 plan_type: selectedPlanType,
@@ -397,13 +638,18 @@
                 amount: document.getElementById('paymentAmount').value,
                 start_date: document.getElementById('startDate').value,
                 notes: document.querySelector('textarea[name="notes"]').value,
+                is_pwd: document.getElementById('isPwd').checked ? 1 : 0,
+                is_senior_citizen: document.getElementById('isSeniorCitizen').checked ? 1 : 0,
+                discount_amount: document.getElementById('discountAmount').value,
+                discount_percentage: document.getElementById('isPwd').checked && document.getElementById('isSeniorCitizen').checked ? 40 : 
+                                   (document.getElementById('isPwd').checked || document.getElementById('isSeniorCitizen').checked ? 20 : 0),
                 _token: '{{ csrf_token() }}'
             };
 
             // Show loading state
-            const confirmBtn = document.getElementById('confirmPaymentBtn');
+            const confirmBtn = document.querySelector('button[onclick="processPayment()"]');
             const originalText = confirmBtn.innerHTML;
-            confirmBtn.innerHTML = '<svg class="animate-spin w-6 h-6 inline mr-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Processing...';
+            confirmBtn.innerHTML = '<svg class="animate-spin w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Processing...';
             confirmBtn.disabled = true;
 
             fetch('{{ route("membership.process-payment") }}', {

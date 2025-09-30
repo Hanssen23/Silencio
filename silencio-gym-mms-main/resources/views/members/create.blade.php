@@ -21,16 +21,16 @@
             <!-- Create Member Form -->
             <div class="bg-white rounded-lg shadow-sm border border-black p-4 sm:p-6">
                 @if ($errors->any())
-                    <div class="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
+                    <div class="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm font-medium text-red-300">There were errors with your submission</h3>
-                                <div class="mt-2 text-sm text-red-200">
+                                <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                                <div class="mt-2 text-sm text-red-700">
                                     <ul class="list-disc pl-5 space-y-1">
                                         @foreach ($errors->all() as $error)
                                             <li>{{ $error }}</li>
@@ -44,20 +44,6 @@
                 <form method="POST" action="{{ route('members.store') }}" class="space-y-4 sm:space-y-6">
                     @csrf
                     
-                    <!-- Membership Note -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
-                        <div class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <p class="text-sm font-medium text-blue-800 mb-1">Membership Plans</p>
-                                <p class="text-xs text-blue-700">
-                                    Members will need to select and pay for a plan after registration to access paid features.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                     
 
 
@@ -65,11 +51,14 @@
                     <div>
                         <label for="first_name" class="block text-sm font-medium text-black mb-2">First Name</label>
                         <input type="text" id="first_name" name="first_name" required 
-                               class="w-full px-3 sm:px-4 py-3 border border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
+                               class="w-full px-3 sm:px-4 py-3 border {{ $errors->has('first_name') ? 'border-red-500' : 'border-black' }} bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
                                placeholder="Enter first name (letters, spaces, and hyphens only)"
                                value="{{ old('first_name') }}"
                                pattern="^[a-zA-Z\s\-]+$"
                                title="First name can only contain letters, spaces, and hyphens">
+                        @error('first_name')
+                            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                        @enderror
                         <div id="first_name_error" class="text-red-500 text-sm mt-1 hidden"></div>
                     </div>
 
@@ -77,11 +66,14 @@
                     <div>
                         <label for="last_name" class="block text-sm font-medium text-black mb-2">Last Name</label>
                         <input type="text" id="last_name" name="last_name" required 
-                               class="w-full px-3 sm:px-4 py-3 border border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
+                               class="w-full px-3 sm:px-4 py-3 border {{ $errors->has('last_name') ? 'border-red-500' : 'border-black' }} bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
                                placeholder="Enter last name (letters, spaces, and hyphens only)"
                                value="{{ old('last_name') }}"
                                pattern="^[a-zA-Z\s\-]+$"
                                title="Last name can only contain letters, spaces, and hyphens">
+                        @error('last_name')
+                            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                        @enderror
                         <div id="last_name_error" class="text-red-500 text-sm mt-1 hidden"></div>
                     </div>
 
@@ -93,11 +85,14 @@
                             <span class="country-code text-black mr-2 text-sm sm:text-base">+63</span>
                             <div class="separator-line w-px h-6 bg-black mr-2"></div>
                             <input type="tel" id="mobile_number" name="mobile_number" required 
-                                   class="flex-1 px-2 sm:px-4 py-2 border border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 text-sm sm:text-base"
+                                   class="flex-1 px-2 sm:px-4 py-2 border {{ $errors->has('mobile_number') ? 'border-red-500' : 'border-black' }} bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 text-sm sm:text-base"
                                    placeholder="912 345 6789"
                                    maxlength="13"
                                    value="{{ old('mobile_number') }}">
                         </div>
+                        @error('mobile_number')
+                            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                        @enderror
                         <p class="text-xs text-gray-600 mt-1">Enter your 10-digit mobile number (e.g., 912 345 6789)</p>
                     </div>
 
@@ -105,18 +100,24 @@
                     <div>
                         <label for="email" class="block text-sm font-medium text-black mb-2">Email</label>
                         <input type="email" id="email" name="email" required 
-                               class="w-full px-3 sm:px-4 py-3 border border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
+                               class="w-full px-3 sm:px-4 py-3 border {{ $errors->has('email') ? 'border-red-500' : 'border-black' }} bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
                                placeholder="Enter email address"
                                value="{{ old('email') }}">
+                        @error('email')
+                            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <!-- Password Field (Optional for admin-created accounts) -->
                     <div>
                         <label for="password" class="block text-sm font-medium text-black mb-2">Password (Optional)</label>
                         <input type="password" id="password" name="password" 
-                               class="w-full px-3 sm:px-4 py-3 border border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
+                               class="w-full px-3 sm:px-4 py-3 border {{ $errors->has('password') ? 'border-red-500' : 'border-black' }} bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
                                placeholder="Leave blank to let user set password later"
                                value="{{ old('password') }}">
+                        @error('password')
+                            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                        @enderror
                         <p class="text-xs text-gray-600 mt-1">If provided, user can login immediately. If left blank, user will need to set password later.</p>
                     </div>
 
@@ -124,9 +125,12 @@
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-black mb-2">Confirm Password</label>
                         <input type="password" id="password_confirmation" name="password_confirmation" 
-                               class="w-full px-3 sm:px-4 py-3 border border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
+                               class="w-full px-3 sm:px-4 py-3 border {{ $errors->has('password_confirmation') ? 'border-red-500' : 'border-black' }} bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors duration-200 placeholder-gray-500 min-h-[44px] text-sm sm:text-base"
                                placeholder="Confirm password"
                                value="{{ old('password_confirmation') }}">
+                        @error('password_confirmation')
+                            <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <!-- Role Field (Hidden - Members are always created as 'member') -->

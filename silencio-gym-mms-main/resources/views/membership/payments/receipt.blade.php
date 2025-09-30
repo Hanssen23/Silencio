@@ -117,6 +117,15 @@
             margin-bottom: 10px;
         }
         
+        .discount-row {
+            color: #dc3545;
+            font-style: italic;
+        }
+        
+        .discount {
+            color: #dc3545;
+        }
+        
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -203,6 +212,12 @@
                 <span class="label">Payment Method:</span>
                 <span class="value">Cash</span>
             </div>
+            @if($payment->tin)
+            <div class="info-row">
+                <span class="label">TIN:</span>
+                <span class="value">{{ $payment->tin }}</span>
+            </div>
+            @endif
         </div>
         
         <!-- Membership Details -->
@@ -231,10 +246,25 @@
 
         <!-- Payment Summary -->
         <div class="total-section">
-            <div class="total-row">
-                <span>Total:</span>
-                <span class="amount">₱{{ number_format($payment->amount, 2) }}</span>
-            </div>
+            @if($payment->hasDiscount())
+                <div class="total-row">
+                    <span>Original Amount:</span>
+                    <span class="amount">₱{{ number_format($payment->original_amount, 2) }}</span>
+                </div>
+                <div class="total-row discount-row">
+                    <span>Discount ({{ $payment->discount_description }}):</span>
+                    <span class="amount discount">-₱{{ number_format($payment->discount_amount, 2) }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span class="amount">₱{{ number_format($payment->amount, 2) }}</span>
+                </div>
+            @else
+                <div class="total-row">
+                    <span>Total:</span>
+                    <span class="amount">₱{{ number_format($payment->amount, 2) }}</span>
+                </div>
+            @endif
             <div class="total-row">
                 <span>Amount Received:</span>
                 <span class="amount">₱{{ number_format($payment->amount, 2) }}</span>

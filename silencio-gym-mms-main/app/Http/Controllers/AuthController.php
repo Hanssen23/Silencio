@@ -13,17 +13,16 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        // If already logged in as admin, redirect to admin dashboard
-        if (Auth::guard('web')->check() && Auth::guard('web')->user()->isAdmin()) {
-            return redirect()->route('dashboard');
+        // Only redirect if user is already authenticated and not already on login page
+        if (Auth::guard('web')->check()) {
+            $user = Auth::guard('web')->user();
+            if ($user->isAdmin()) {
+                return redirect()->route('dashboard');
+            } elseif ($user->isEmployee()) {
+                return redirect()->route('employee.dashboard');
+            }
         }
         
-        // If logged in as employee, redirect to employee dashboard
-        if (Auth::guard('web')->check() && Auth::guard('web')->user()->isEmployee()) {
-            return redirect()->route('employee.dashboard');
-        }
-        
-        // If logged in as member, redirect to member dashboard
         if (Auth::guard('member')->check()) {
             return redirect()->route('member.dashboard');
         }

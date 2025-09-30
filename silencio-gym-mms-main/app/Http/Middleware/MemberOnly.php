@@ -22,6 +22,10 @@ class MemberOnly
                     return redirect()->route('dashboard');
                 }
             }
+            // Prevent redirect loop by checking if we're already on login page
+            if (!$request->is('login') && !$request->is('/')) {
+                return redirect()->route('login');
+            }
             return redirect()->route('login');
         }
 

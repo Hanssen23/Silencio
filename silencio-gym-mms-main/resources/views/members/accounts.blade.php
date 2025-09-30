@@ -44,9 +44,11 @@
                                            id="email" 
                                            name="email" 
                                            value="{{ $member->email }}" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                           readonly
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                                           style="color: #6B7280;"
                                            required>
-                                    <p class="text-xs text-gray-500 mt-1">This will be used for important notifications</p>
+                                    <p class="text-xs text-gray-500 mt-1">Email cannot be modified for security reasons</p>
                                 </div>
 
                                 <!-- Mobile Number Field -->

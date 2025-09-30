@@ -131,7 +131,7 @@ class AccountController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users,email|unique:members,email',
             'mobile_number' => 'nullable|string|regex:/^9\d{2}\s\d{3}\s\d{4}$/',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:admin,employee',
@@ -247,7 +247,7 @@ class AccountController extends Controller
         $validationRules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id . '|unique:members,email',
             'mobile_number' => 'nullable|string|regex:/^9\d{2}\s\d{3}\s\d{4}$/',
             'password' => 'nullable|string|min:8|confirmed',
         ];

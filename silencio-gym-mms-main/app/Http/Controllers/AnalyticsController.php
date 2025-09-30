@@ -15,19 +15,27 @@ class AnalyticsController extends Controller
     /**
      * Get weekly attendance data for the past 7 days
      */
+    public function weeklyAttendance(Request $request)
+    {
+        return $this->getWeeklyAttendance($request);
+    }
+
+    /**
+     * Get weekly attendance data for the past 7 days (internal method)
+     */
     public function getWeeklyAttendance(Request $request)
     {
         $days = $request->get('days', 7);
         $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
         $endDate = Carbon::now()->endOfDay();
 
-        // Get daily attendance counts
+        // Get daily attendance counts (SQLite compatible)
         $attendanceData = Attendance::select(
-                DB::raw('DATE(check_in_time) as date'),
+                DB::raw('date(check_in_time) as date'),
                 DB::raw('COUNT(*) as count')
             )
             ->whereBetween('check_in_time', [$startDate, $endDate])
-            ->groupBy(DB::raw('DATE(check_in_time)'))
+            ->groupBy(DB::raw('date(check_in_time)'))
             ->orderBy('date')
             ->get()
             ->keyBy('date');
@@ -59,20 +67,28 @@ class AnalyticsController extends Controller
     /**
      * Get weekly revenue data for the past 7 days
      */
+    public function weeklyRevenue(Request $request)
+    {
+        return $this->getWeeklyRevenue($request);
+    }
+
+    /**
+     * Get weekly revenue data for the past 7 days (internal method)
+     */
     public function getWeeklyRevenue(Request $request)
     {
         $days = $request->get('days', 7);
         $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
         $endDate = Carbon::now()->endOfDay();
 
-        // Get daily revenue
+        // Get daily revenue (SQLite compatible)
         $revenueData = Payment::select(
-                DB::raw('DATE(payment_date) as date'),
+                DB::raw('date(payment_date) as date'),
                 DB::raw('SUM(amount) as total')
             )
             ->where('status', 'completed')
             ->whereBetween('payment_date', [$startDate, $endDate])
-            ->groupBy(DB::raw('DATE(payment_date)'))
+            ->groupBy(DB::raw('date(payment_date)'))
             ->orderBy('date')
             ->get()
             ->keyBy('date');
@@ -102,7 +118,15 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get monthly revenue data for the current month (kept for backward compatibility)
+     * Get monthly revenue data for the current month
+     */
+    public function monthlyRevenue(Request $request)
+    {
+        return $this->getMonthlyRevenue($request);
+    }
+
+    /**
+     * Get monthly revenue data for the current month (internal method)
      */
     public function getMonthlyRevenue(Request $request)
     {
@@ -112,14 +136,14 @@ class AnalyticsController extends Controller
         $startDate = Carbon::create($year, $month, 1)->startOfDay();
         $endDate = $startDate->copy()->endOfMonth();
 
-        // Get daily revenue
+        // Get daily revenue (SQLite compatible)
         $revenueData = Payment::select(
-                DB::raw('DATE(payment_date) as date'),
+                DB::raw('date(payment_date) as date'),
                 DB::raw('SUM(amount) as total')
             )
             ->where('status', 'completed')
             ->whereBetween('payment_date', [$startDate, $endDate])
-            ->groupBy(DB::raw('DATE(payment_date)'))
+            ->groupBy(DB::raw('date(payment_date)'))
             ->orderBy('date')
             ->get()
             ->keyBy('date');
@@ -236,12 +260,12 @@ class AnalyticsController extends Controller
                 $endDate = Carbon::now()->endOfMonth();
                 
                 $data = Attendance::select(
-                        DB::raw('YEAR(check_in_time) as year'),
-                        DB::raw('MONTH(check_in_time) as month'),
+                        DB::raw("strftime('%Y', check_in_time) as year"),
+                        DB::raw("strftime('%m', check_in_time) as month"),
                         DB::raw('COUNT(*) as count')
                     )
                     ->whereBetween('check_in_time', [$startDate, $endDate])
-                    ->groupBy(DB::raw('YEAR(check_in_time), MONTH(check_in_time)'))
+                    ->groupBy(DB::raw("strftime('%Y', check_in_time), strftime('%m', check_in_time)"))
                     ->orderBy('year')
                     ->orderBy('month')
                     ->get();
@@ -285,12 +309,12 @@ class AnalyticsController extends Controller
                 $endDate = Carbon::create($year, 12, 31)->endOfDay();
                 
                 $data = Payment::select(
-                        DB::raw('MONTH(payment_date) as month'),
+                        DB::raw("CAST(strftime('%m', payment_date) AS INTEGER) as month"),
                         DB::raw('SUM(amount) as total')
                     )
                     ->where('status', 'completed')
                     ->whereBetween('payment_date', [$startDate, $endDate])
-                    ->groupBy(DB::raw('MONTH(payment_date)'))
+                    ->groupBy(DB::raw("strftime('%m', payment_date)"))
                     ->orderBy('month')
                     ->get();
                 

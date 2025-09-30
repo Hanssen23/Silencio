@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\Log;
 class RfidController extends Controller
 {
     /**
+     * Show RFID monitor dashboard
+     */
+    public function monitor()
+    {
+        return view('rfid-monitor');
+    }
+
+    /**
      * Handle RFID card tap for check-in/check-out
      */
     public function handleCardTap(Request $request): JsonResponse

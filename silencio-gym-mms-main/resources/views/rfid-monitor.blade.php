@@ -14,7 +14,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs sm:text-sm font-medium mb-2" style="color: #6B7280;">Today's Check-ins</p>
-                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #059669;" id="today-checkins">-</p>
+                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #059669;" id="todays-checkins">-</p>
                                 </div>
                                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" style="background-color: #059669;">
                                     <span class="text-lg sm:text-2xl text-white">✅</span>

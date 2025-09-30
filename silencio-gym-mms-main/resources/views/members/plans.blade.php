@@ -11,7 +11,7 @@
                         <h2 class="text-3xl font-bold" style="color: #1E40AF;">Plan Types</h2>
                         <div class="flex items-center space-x-2">
                             <div id="realtime-indicator" class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                            <span class="text-sm text-gray-600">Live Updates</span>
+                            <span class="text-sm text-gray-600">Real-time</span>
                         </div>
                     </div>
 
@@ -177,51 +177,69 @@
         function updatePlansDisplay() {
             // Update the plans display with real-time data
             const plansContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
-            if (plansContainer && plans.length > 0) {
-                // Generate new HTML for plans
-                const newPlansHTML = plans.map(plan => `
+            if (plansContainer) {
+                // Fetch fresh data and update DOM without page reload
+                fetch('{{ route("member.membership-pricing") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.plans) {
+                            plans = data.plans;
+                            renderPlans(plans);
+                            showNotification('Plans updated in real-time', 'success');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating plans:', error);
+                        // Fallback to page reload
+                        setTimeout(() => window.location.reload(), 1000);
+                    });
+            }
+        }
+
+        function renderPlans(plansData) {
+            const plansContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
+            if (!plansContainer) return;
+
+            const newPlansHTML = plansData.map(plan => `
                     <div class="bg-white border rounded-lg p-6" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-2xl font-bold" style="color: #000000;">${plan.name}</h3>
                             <span class="px-4 py-2 text-sm font-semibold rounded-full text-white" 
                                   style="background-color: ${plan.name === 'VIP' || plan.name === 'Premium' ? '#F59E0B' : '#059669'};">
-                                ${plan.currency || '₱'}${parseFloat(plan.price).toFixed(2)}/month
+                                ₱${parseFloat(plan.price).toFixed(2)}/month
                             </span>
                         </div>
                         <p class="mb-6 leading-relaxed" style="color: #6B7280;">${plan.description}</p>
                         <div class="space-y-3 mb-6">
                             <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
                                 <span class="text-sm" style="color: #374151;">Monthly:</span>
-                                <span class="font-semibold" style="color: #000000;">${plan.currency || '₱'}${parseFloat(plan.price).toFixed(2)}</span>
+                                <span class="font-semibold" style="color: #000000;">₱${parseFloat(plan.price).toFixed(2)}</span>
                             </div>
                             <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
                                 <span class="text-sm" style="color: #374151;">Quarterly:</span>
-                                <span class="font-semibold" style="color: #000000;">${plan.currency || '₱'}${(parseFloat(plan.price) * 3).toFixed(2)}</span>
+                                <span class="font-semibold" style="color: #000000;">₱${(parseFloat(plan.price) * 3).toFixed(2)}</span>
                             </div>
                             <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
                                 <span class="text-sm" style="color: #374151;">Biannually:</span>
-                                <span class="font-semibold" style="color: #000000;">${plan.currency || '₱'}${(parseFloat(plan.price) * 6).toFixed(2)}</span>
+                                <span class="font-semibold" style="color: #000000;">₱${(parseFloat(plan.price) * 6).toFixed(2)}</span>
                             </div>
                             <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded border" style="border-color: #E5E7EB;">
                                 <span class="text-sm" style="color: #374151;">Annually:</span>
-                                <span class="font-semibold" style="color: #000000;">${plan.currency || '₱'}${(parseFloat(plan.price) * 12).toFixed(2)}</span>
+                                <span class="font-semibold" style="color: #000000;">₱${(parseFloat(plan.price) * 12).toFixed(2)}</span>
                             </div>
                         </div>
                         <p class="text-xs" style="color: #6B7280;">Read-only view</p>
                     </div>
                 `).join('');
 
-                // Update the container with new content
-                plansContainer.innerHTML = newPlansHTML;
-                
-                // Add visual feedback for update
-                plansContainer.style.opacity = '0.7';
-                setTimeout(() => {
-                    plansContainer.style.opacity = '1';
-                }, 200);
-                
-                // Show notification
-                showNotification('Membership plans have been updated', 'success');
+            // Update the container with new content
+            plansContainer.innerHTML = newPlansHTML;
+            
+            // Add visual feedback for update
+            plansContainer.style.opacity = '0.7';
+            setTimeout(() => {
+                plansContainer.style.opacity = '1';
+            }, 200);
             }
         }
 

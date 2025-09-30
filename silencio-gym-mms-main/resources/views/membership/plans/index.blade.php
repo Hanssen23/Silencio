@@ -12,7 +12,7 @@
                             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Plan Types</h2>
                             <div class="flex items-center space-x-2">
                                 <div id="realtime-indicator" class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                                <span class="text-xs sm:text-sm text-gray-600">Live Updates</span>
+                                <span class="text-xs sm:text-sm text-gray-600">Real-time</span>
                             </div>
                         </div>
                         <button onclick="openAddPlanModal()" class="inline-flex items-center justify-center px-4 sm:px-6 py-3 text-white rounded-lg transition-colors shadow-sm min-h-[44px] w-full sm:w-auto" style="background-color: #059669;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
@@ -158,7 +158,7 @@
                                         </div>
                                     </div>
                                 </a>
-                                <a href="{{ route('membership.payments') }}" class="block w-full p-6 border rounded-lg hover:bg-gray-50 transition-colors group" style="border-color: #E5E7EB;">
+                                <a href="{{ route('membership.payments.index') }}" class="block w-full p-6 border rounded-lg hover:bg-gray-50 transition-colors group" style="border-color: #E5E7EB;">
                                     <div class="flex items-center">
                                         <div class="w-12 h-12 rounded-lg flex items-center justify-center mr-4 group-hover:bg-gray-100 transition-colors" style="background-color: #059669;">
                                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -472,13 +472,138 @@
 
         function updatePlansDisplay() {
             // Update the plans display with real-time data
-            const plansContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
+            const plansContainer = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3');
             if (plansContainer) {
-                // Trigger a page refresh to show updated data
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // Fetch fresh data and update DOM without page reload
+                fetch('{{ route("membership-plans.all") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.plans) {
+                            plans = data.plans;
+                            renderPlans(plans);
+                            showNotification('Plans updated in real-time', 'success');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating plans:', error);
+                        // Fallback to page reload
+                        setTimeout(() => window.location.reload(), 1000);
+                    });
             }
+        }
+
+        function renderPlans(plansData) {
+            const plansContainer = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3');
+            if (!plansContainer) return;
+
+            const plansHTML = plansData.map(plan => `
+                <div class="bg-white border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2">
+                        <h3 class="text-xl sm:text-2xl font-bold text-gray-900">${plan.name}</h3>
+                        ${plan.name === 'VIP' || plan.name === 'Premium' ? 
+                            `<span class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full bg-amber-500 text-white">
+                                ₱${parseFloat(plan.price).toFixed(2)}/month
+                            </span>` :
+                            `<span class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full bg-green-600 text-white">
+                                ₱${parseFloat(plan.price).toFixed(2)}/month
+                            </span>`
+                        }
+                    </div>
+                    <p class="mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base text-gray-600">${plan.description}</p>
+                    <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border border-gray-200">
+                            <span class="text-xs sm:text-sm text-gray-700">Monthly:</span>
+                            <span class="font-semibold text-xs sm:text-sm text-gray-900">₱${parseFloat(plan.price).toFixed(2)}</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border border-gray-200">
+                            <span class="text-xs sm:text-sm text-gray-700">Quarterly:</span>
+                            <span class="font-semibold text-xs sm:text-sm text-gray-900">₱${(parseFloat(plan.price) * 3).toFixed(2)}</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border border-gray-200">
+                            <span class="text-xs sm:text-sm text-gray-700">Biannually:</span>
+                            <span class="font-semibold text-xs sm:text-sm text-gray-900">₱${(parseFloat(plan.price) * 6).toFixed(2)}</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border border-gray-200">
+                            <span class="text-xs sm:text-sm text-gray-700">Annually:</span>
+                            <span class="font-semibold text-xs sm:text-sm text-gray-900">₱${(parseFloat(plan.price) * 12).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                        <button onclick="editPlanType('${plan.id}')" class="flex-1 px-3 sm:px-4 py-2 text-white text-xs sm:text-sm rounded-lg transition-colors min-h-[44px]" style="background-color: #059669;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
+                            Edit
+                        </button>
+                        <button onclick="deletePlanType('${plan.id}')" class="flex-1 px-3 sm:px-4 py-2 text-white text-xs sm:text-sm rounded-lg transition-colors min-h-[44px]" 
+                                style="background-color: #DC2626; border: 2px solid #E5E7EB; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);" 
+                                onmouseover="this.style.backgroundColor='#B91C1C'" 
+                                onmouseout="this.style.backgroundColor='#DC2626'">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            plansContainer.innerHTML = plansHTML;
+        }
+
+        function updateDurationTypesDisplay() {
+            // Update the duration types display with real-time data
+            const durationTypesContainer = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-4');
+            if (durationTypesContainer) {
+                // Fetch fresh data and update DOM without page reload
+                fetch('{{ route("membership-plans.duration-types") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data) {
+                            durationTypes = data;
+                            renderDurationTypes(durationTypes);
+                            showNotification('Duration types updated in real-time', 'success');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating duration types:', error);
+                        // Fallback to page reload
+                        setTimeout(() => window.location.reload(), 1000);
+                    });
+            }
+        }
+
+        function renderDurationTypes(durationTypesData) {
+            const durationTypesContainer = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-4');
+            if (!durationTypesContainer) return;
+
+            const durationTypesHTML = Object.entries(durationTypesData).map(([key, duration]) => `
+                <div class="bg-white border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-2">
+                        <h3 class="text-xl sm:text-2xl font-bold text-gray-900">${duration.name}</h3>
+                        <span class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full bg-blue-600 text-white">
+                            ${duration.days} days
+                        </span>
+                    </div>
+                    <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border border-gray-200">
+                            <span class="text-xs sm:text-sm text-gray-700">Multiplier:</span>
+                            <span class="font-semibold text-xs sm:text-sm text-gray-900">${duration.multiplier}x</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded border border-gray-200">
+                            <span class="text-xs sm:text-sm text-gray-700">Duration:</span>
+                            <span class="font-semibold text-xs sm:text-sm text-gray-900">${duration.days} days</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                        <button onclick="editDurationType('${key}')" class="flex-1 px-3 sm:px-4 py-2 text-white text-xs sm:text-sm rounded-lg transition-colors min-h-[44px]" style="background-color: #059669;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
+                            Edit
+                        </button>
+                        <button onclick="deleteDurationType('${key}')" class="flex-1 px-3 sm:px-4 py-2 text-white text-xs sm:text-sm rounded-lg transition-colors min-h-[44px]" 
+                                style="background-color: #DC2626; border: 2px solid #E5E7EB; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);" 
+                                onmouseover="this.style.backgroundColor='#B91C1C'" 
+                                onmouseout="this.style.backgroundColor='#DC2626'">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            durationTypesContainer.innerHTML = durationTypesHTML;
         }
 
         function openAddPlanModal() {
@@ -644,7 +769,8 @@
             .then(data => {
                 if (data.success) {
                     showNotification('Duration types updated successfully', 'success');
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Update duration types display in real-time
+                    updateDurationTypesDisplay();
                 } else {
                     showNotification(data.message || 'Failed to update duration types', 'error');
                 }
@@ -682,7 +808,8 @@
                 if (data.success) {
                     showNotification('Plan created successfully', 'success');
                     closeAddPlanModal();
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Update plans display in real-time
+                    updatePlansDisplay();
                 } else {
                     showNotification(data.message || 'Failed to create plan', 'error');
                 }
@@ -720,7 +847,8 @@
                 if (data.success) {
                     showNotification('Plan updated successfully', 'success');
                     closeEditPlanModal();
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Update plans display in real-time
+                    updatePlansDisplay();
                 } else {
                     showNotification(data.message || 'Failed to update plan', 'error');
                 }
@@ -844,9 +972,8 @@
             .then(data => {
                 if (data.success) {
                     showNotification('Plan deleted successfully', 'success');
-                    loadPlansData();
-                    // Refresh page to update display
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Update plans display in real-time
+                    updatePlansDisplay();
                 } else {
                     showNotification(data.message || 'Failed to delete plan', 'error');
                 }
@@ -909,6 +1036,67 @@
         });
 
         // Initialize when DOM is loaded
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 translate-x-full`;
+            
+            // Set colors based on type
+            switch (type) {
+                case 'success':
+                    notification.style.backgroundColor = '#10B981';
+                    notification.style.color = 'white';
+                    break;
+                case 'error':
+                    notification.style.backgroundColor = '#EF4444';
+                    notification.style.color = 'white';
+                    break;
+                case 'warning':
+                    notification.style.backgroundColor = '#F59E0B';
+                    notification.style.color = 'white';
+                    break;
+                default:
+                    notification.style.backgroundColor = '#3B82F6';
+                    notification.style.color = 'white';
+            }
+
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            // Add to page
+            document.body.appendChild(notification);
+
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(full)';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             initializeSSE();
         });

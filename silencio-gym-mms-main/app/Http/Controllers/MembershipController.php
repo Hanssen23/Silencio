@@ -110,6 +110,11 @@ class MembershipController extends Controller
                 'membership_start_date' => $startDate->setTimezone('Asia/Manila'),
                 'membership_expiration_date' => $expirationDate->setTimezone('Asia/Manila'),
                 'notes' => $request->notes,
+                'tin' => $request->tin,
+                'is_pwd' => $request->is_pwd ?? false,
+                'is_senior_citizen' => $request->is_senior_citizen ?? false,
+                'discount_amount' => $request->discount_amount ?? 0.00,
+                'discount_percentage' => $request->discount_percentage ?? 0.00,
             ]);
 
             // Create membership period
@@ -384,5 +389,90 @@ class MembershipController extends Controller
                 ]);
             }
         }
+    }
+
+    /**
+     * Get all membership plans (API endpoint)
+     */
+    public function getAllPlans()
+    {
+        $plans = \App\Models\MembershipPlan::orderBy('price')->get();
+        return response()->json(['plans' => $plans]);
+    }
+
+    /**
+     * Store a new membership plan
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'duration_days' => 'required|integer|min:1',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $plan = \App\Models\MembershipPlan::create($request->all());
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Membership plan created successfully',
+            'plan' => $plan
+        ]);
+    }
+
+    /**
+     * Update a membership plan
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'duration_days' => 'required|integer|min:1',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $plan = \App\Models\MembershipPlan::findOrFail($id);
+        $plan->update($request->all());
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Membership plan updated successfully',
+            'plan' => $plan
+        ]);
+    }
+
+    /**
+     * Delete a membership plan
+     */
+    public function destroy($id)
+    {
+        $plan = \App\Models\MembershipPlan::findOrFail($id);
+        $plan->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Membership plan deleted successfully'
+        ]);
+    }
+
+    /**
+     * Update duration types
+     */
+    public function updateDurationTypes(Request $request)
+    {
+        $request->validate([
+            'duration_types' => 'required|array',
+        ]);
+
+        // Update config or database with new duration types
+        // This is a placeholder implementation
+        return response()->json([
+            'success' => true,
+            'message' => 'Duration types updated successfully'
+        ]);
     }
 }

@@ -95,6 +95,24 @@
                         <input type="password" id="password_confirmation" name="password_confirmation" class="bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 sm:p-3 lg:p-2.5 min-h-[40px] sm:min-h-[44px] shadow-sm" placeholder="Confirm your password" required />
                     </div>
                     
+                    <!-- Terms and Conditions -->
+                    <div class="mb-3 sm:mb-4 lg:mb-5">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="accept_terms" name="accept_terms" type="checkbox" value="1" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" required>
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="accept_terms" class="text-gray-700">
+                                    I agree to the 
+                                    <a href="{{ route('terms') }}" target="_blank" class="text-blue-600 hover:underline font-medium">Terms and Conditions</a>
+                                </label>
+                            </div>
+                        </div>
+                        @error('accept_terms')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
                     <!-- Sign Up Link -->
                     <div class="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-5">
                         <a href="{{ route('login') }}" class="text-xs sm:text-sm text-blue-600 hover:underline text-center">Already have an account? Log in</a>

@@ -13,7 +13,7 @@
         </div>
     </div>
     
-    <!-- Admin Info and Logout - Right Side -->
+    <!-- Admin Info - Right Side -->
     <div class="flex items-center gap-3 sm:gap-4">
         <!-- Admin Name and Role -->
         <div class="hidden md:flex items-center gap-2 text-right">

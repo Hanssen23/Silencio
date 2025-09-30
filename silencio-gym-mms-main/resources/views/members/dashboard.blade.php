@@ -107,17 +107,25 @@
                              <div class="bg-white rounded-lg p-4 space-y-2">
                                  <div class="flex justify-between items-center">
                                      <span class="text-sm text-gray-600">Check-in:</span>
-                                     <span class="text-sm font-medium text-gray-900">{{ $currentGymSession->check_in_time->format('M d, Y g:i A') }}</span>
+                                     <span class="text-sm font-medium text-gray-900" id="checkin-time">{{ $currentGymSession->check_in_time->format('M d, Y g:i A') }}</span>
                                  </div>
                                  <div class="flex justify-between items-center">
                                      <span class="text-sm text-gray-600">Duration:</span>
-                                     <span class="text-sm font-medium text-purple-600">{{ $currentGymSession->check_in_time->diffForHumans(null, true) }}</span>
+                                     <span class="text-sm font-medium text-purple-600" id="session-duration">{{ $currentGymSession->check_in_time->diffForHumans(null, true) }}</span>
+                                 </div>
+                                 <div class="flex justify-between items-center">
+                                     <span class="text-sm text-gray-600">Current Time:</span>
+                                     <span class="text-sm font-medium text-gray-900" id="current-time">{{ now()->format('M d, Y g:i A') }}</span>
                                  </div>
                              </div>
                          @else
                              <div class="bg-white rounded-lg p-4">
                                  <p class="text-sm text-gray-500 text-center">Not currently in gym</p>
                                  <p class="text-xs text-gray-400 text-center mt-1">Tap your RFID card to check in</p>
+                                 <div class="mt-2 text-center">
+                                     <span class="text-sm text-gray-600">Current Time:</span>
+                                     <span class="text-sm font-medium text-gray-900" id="current-time">{{ now()->format('M d, Y g:i A') }}</span>
+                                 </div>
                              </div>
                          @endif
                      </div>
@@ -216,15 +224,32 @@
                                 @php
                                     $expiresAtCarbon = \Carbon\Carbon::parse($expiresAt);
                                     $daysLeft = $member->days_until_expiration;
+                                    
+                                    // If no days left from member model, calculate from latest payment
+                                    if ($daysLeft <= 0 && $member->payments()->where('status', 'completed')->exists()) {
+                                        $latestPayment = $member->payments()->where('status', 'completed')->latest()->first();
+                                        if ($latestPayment && $latestPayment->membership_expiration_date) {
+                                            $paymentExpiresAt = \Carbon\Carbon::parse($latestPayment->membership_expiration_date);
+                                            $now = \Carbon\Carbon::now();
+                                            $daysLeft = max(0, (int) $now->diffInDays($paymentExpiresAt, false));
+                                            $expiresAtCarbon = $paymentExpiresAt;
+                                        }
+                                    }
+                                    
+                                    // Ensure days left is a whole number
+                                    $daysLeft = max(0, (int) $daysLeft);
                                 @endphp
-                                @if($membershipStatus === 'Expired')
+                                @if($membershipStatus === 'Expired' || $daysLeft <= 0)
                                     <p class="text-4xl font-bold text-red-600 mb-2">0</p>
                                     <p class="text-xs text-gray-500 mb-2">Expired on {{ $expiresAtCarbon->format('M d, Y') }}</p>
                                     <span class="text-xs text-red-600 font-medium">Membership Expired</span>
                                 @else
-                                    <p class="text-4xl font-bold {{ $daysLeft > 7 ? 'text-green-600' : 'text-red-600' }} mb-2">{{ $daysLeft }}</p>
+                                    @php
+                                        $colorClass = $daysLeft > 365 ? 'text-green-600' : ($daysLeft > 30 ? 'text-yellow-600' : 'text-red-600');
+                                    @endphp
+                                    <p class="text-4xl font-bold {{ $colorClass }} mb-2" id="days-remaining">{{ $daysLeft }}</p>
                                     <p class="text-xs text-gray-500 mb-2">Until {{ $expiresAtCarbon->format('M d, Y') }}</p>
-                                    <span class="text-xs {{ $daysLeft > 7 ? 'text-green-600' : 'text-red-600' }} font-medium">{{ $daysLeft }} days remaining</span>
+                                    <span class="text-xs {{ $colorClass }} font-medium" id="days-remaining-text">{{ $daysLeft }} days remaining</span>
                                 @endif
                             @else
                                 <p class="text-4xl font-bold text-gray-400 mb-2">∞</p>
@@ -243,8 +268,9 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-xl font-bold mb-2 text-black">Currently in Gym</h3>
-                            <p class="text-black font-medium">Check-in time: {{ $currentGymSession->check_in_time->format('g:i A') }}</p>
-                            <p class="text-black font-medium">Session duration: {{ $currentGymSession->check_in_time->diffForHumans() }}</p>
+                            <p class="text-black font-medium">Check-in time: <span id="gym-checkin-time">{{ $currentGymSession->check_in_time->format('g:i A') }}</span></p>
+                            <p class="text-black font-medium">Session duration: <span id="gym-session-duration">{{ $currentGymSession->check_in_time->diffForHumans() }}</span></p>
+                            <p class="text-black font-medium">Current time: <span id="gym-current-time">{{ now()->format('M d, Y g:i A') }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -256,22 +282,121 @@
 
     <!-- Real-time update script -->
     <script>
-        // Update timestamp every minute
-        function updateTimestamp() {
+        // Real-time clock update
+        function updateRealTimeClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
+                hour: 'numeric', 
                 minute: '2-digit',
-                hour12: false 
+                second: '2-digit',
+                hour12: true 
             });
+            const dateString = now.toLocaleDateString('en-US', { 
+                year: 'numeric',
+                month: 'short', 
+                day: 'numeric' 
+            });
+            const fullDateTime = `${dateString} ${timeString}`;
+            
+            // Update all current time elements
+            const currentTimeElements = document.querySelectorAll('#current-time, #gym-current-time');
+            currentTimeElements.forEach(element => {
+                if (element) {
+                    element.textContent = fullDateTime;
+                }
+            });
+            
+            // Update last updated timestamp
             const timestampElement = document.getElementById('last-updated');
             if (timestampElement) {
                 timestampElement.textContent = timeString;
             }
         }
 
-        // Update every minute
-        setInterval(updateTimestamp, 60000);
+        // Update session duration in real-time
+        function updateSessionDuration() {
+            const checkinTimeElement = document.getElementById('checkin-time');
+            const sessionDurationElement = document.getElementById('session-duration');
+            const gymCheckinTimeElement = document.getElementById('gym-checkin-time');
+            const gymSessionDurationElement = document.getElementById('gym-session-duration');
+            
+            if (checkinTimeElement && sessionDurationElement) {
+                const checkinTimeText = checkinTimeElement.textContent;
+                const checkinDate = new Date(checkinTimeText);
+                const now = new Date();
+                const diffMs = now - checkinDate;
+                
+                if (diffMs > 0) {
+                    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+                    
+                    let durationText = '';
+                    if (hours > 0) {
+                        durationText = `${hours}h ${minutes}m`;
+                    } else if (minutes > 0) {
+                        durationText = `${minutes}m ${seconds}s`;
+                    } else {
+                        durationText = `${seconds}s`;
+                    }
+                    
+                    sessionDurationElement.textContent = durationText;
+                }
+            }
+            
+            if (gymCheckinTimeElement && gymSessionDurationElement) {
+                const checkinTimeText = gymCheckinTimeElement.textContent;
+                const checkinDate = new Date(checkinTimeText);
+                const now = new Date();
+                const diffMs = now - checkinDate;
+                
+                if (diffMs > 0) {
+                    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    let durationText = '';
+                    if (hours > 0) {
+                        durationText = `${hours} hours, ${minutes} minutes ago`;
+                    } else if (minutes > 0) {
+                        durationText = `${minutes} minutes ago`;
+                    } else {
+                        durationText = 'Just now';
+                    }
+                    
+                    gymSessionDurationElement.textContent = durationText;
+                }
+            }
+        }
+
+        // Update days remaining with color coding
+        function updateDaysRemaining() {
+            const daysRemainingElement = document.getElementById('days-remaining');
+            const daysRemainingTextElement = document.getElementById('days-remaining-text');
+            
+            if (daysRemainingElement && daysRemainingTextElement) {
+                const daysLeft = parseInt(daysRemainingElement.textContent);
+                let colorClass = '';
+                
+                if (daysLeft > 365) {
+                    colorClass = 'text-green-600';
+                } else if (daysLeft > 30) {
+                    colorClass = 'text-yellow-600';
+                } else {
+                    colorClass = 'text-red-600';
+                }
+                
+                // Update color classes
+                daysRemainingElement.className = `text-4xl font-bold ${colorClass} mb-2`;
+                daysRemainingTextElement.className = `text-xs ${colorClass} font-medium`;
+                
+                // Update text content
+                if (daysLeft > 0) {
+                    daysRemainingTextElement.textContent = `${daysLeft} days remaining`;
+                } else {
+                    daysRemainingTextElement.textContent = 'Membership Expired';
+                }
+            }
+        }
 
         // Update gym presence status indicator
         function updateGymStatus() {
@@ -284,14 +409,25 @@
             }
         }
 
-        // Update status every 5 seconds
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update immediately
+            updateRealTimeClock();
+            updateSessionDuration();
+            updateDaysRemaining();
+            
+            // Update clock every second
+            setInterval(updateRealTimeClock, 1000);
+            
+            // Update session duration every 10 seconds
+            setInterval(updateSessionDuration, 10000);
+            
+            // Update gym status every 5 seconds
         setInterval(updateGymStatus, 5000);
 
-        // Auto-refresh dashboard data every 2 minutes
-        setInterval(function() {
-            // In a real implementation, you'd make an AJAX call to update specific data
-            console.log('Dashboard data refreshed at:', new Date().toLocaleTimeString());
-        }, 120000);
+            // Update days remaining every minute
+            setInterval(updateDaysRemaining, 60000);
+        });
     </script>
 </x-layout>
 

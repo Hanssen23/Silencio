@@ -82,9 +82,11 @@ class MemberController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'mobile_number' => 'required|string|max:20',
-            'email' => 'required|email|unique:members,email',
+            'email' => 'required|email|unique:members,email|unique:users,email',
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'nullable|in:member,admin,employee',
+        ], [
+            'email.unique' => 'This email is already registered',
         ]);
 
         // Restrict role creation based on user type
@@ -196,8 +198,11 @@ class MemberController extends Controller
                 'member_number' => 'required|string|unique:members,member_number,' . $id,
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
-                // Email and mobile_number are not validated as they cannot be updated
+                'email' => 'required|email|unique:members,email,' . $id . '|unique:users,email',
+                'mobile_number' => 'nullable|string|max:20',
                 // membership is not validated as it's automatically set during payment processing
+            ], [
+                'email.unique' => 'This email is already registered',
             ]);
 
             $member->update([
@@ -205,7 +210,8 @@ class MemberController extends Controller
                 'member_number' => $request->member_number,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
-                // Email and mobile_number are not updated for security reasons
+                'email' => $request->email,
+                'mobile_number' => $request->mobile_number,
                 // membership is not updated as it's automatically set during payment processing
             ]);
         }
