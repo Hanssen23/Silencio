@@ -349,6 +349,92 @@ class RfidController extends Controller
     }
 
     /**
+     * Manually trigger auto tap-out for all active members
+     */
+    public function manualAutoTapOut(): JsonResponse
+    {
+        try {
+            // Get all active sessions
+            $activeSessions = ActiveSession::with('member', 'attendance')
+                ->where('status', 'active')
+                ->whereNull('check_out_time')
+                ->get();
+
+            if ($activeSessions->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No active members found. Nothing to tap out.',
+                    'tapped_out_count' => 0
+                ]);
+            }
+
+            $tappedOutCount = 0;
+            $errors = [];
+
+            foreach ($activeSessions as $session) {
+                try {
+                    $now = Carbon::now();
+                    
+                    // Update the active session
+                    $session->update([
+                        'check_out_time' => $now,
+                        'status' => 'inactive',
+                        'session_duration' => $session->check_in_time->diffForHumans($now, true)
+                    ]);
+
+                    // Update the attendance record
+                    if ($session->attendance) {
+                        $session->attendance->update([
+                            'check_out_time' => $now,
+                            'duration' => $session->check_in_time->diffInMinutes($now)
+                        ]);
+                    }
+
+                    $tappedOutCount++;
+                    
+                    Log::info('Member manually tapped out', [
+                        'member_id' => $session->member_id,
+                        'member_name' => $session->member->first_name . ' ' . $session->member->last_name,
+                        'member_uid' => $session->member->uid,
+                        'check_in_time' => $session->check_in_time,
+                        'check_out_time' => $now,
+                        'session_duration' => $session->session_duration,
+                        'reason' => 'manual_auto_tapout'
+                    ]);
+                    
+                } catch (\Exception $e) {
+                    $errors[] = "Failed to tap out {$session->member->first_name} {$session->member->last_name}: " . $e->getMessage();
+                    
+                    Log::error('Manual auto tap-out failed', [
+                        'member_id' => $session->member_id,
+                        'session_id' => $session->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            $message = "Successfully tapped out {$tappedOutCount} members.";
+            if (!empty($errors)) {
+                $message .= " Failed to tap out " . count($errors) . " members.";
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'tapped_out_count' => $tappedOutCount,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Manual auto tap-out error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to perform auto tap-out: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get RFID logs
      */
     public function getRfidLogs(Request $request): JsonResponse

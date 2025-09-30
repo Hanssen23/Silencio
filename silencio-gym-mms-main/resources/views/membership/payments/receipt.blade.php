@@ -11,79 +11,88 @@
             .receipt { box-shadow: none; border: 1px solid #000; }
         }
         
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 1rem;
             background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .receipt {
-            max-width: 400px;
+            width: 100%;
+            max-width: 28rem; /* 448px */
             margin: 0 auto;
             background: white;
-            padding: 30px;
-            border-radius: 8px;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .header {
             text-align: center;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.875rem;
         }
         
         .logo {
-            width: 100px;
+            width: 6.25rem; /* 100px */
             height: auto;
-            margin-bottom: 10px;
+            margin-bottom: 0.625rem;
         }
         
         .gym-name {
-            font-size: 24px;
+            font-size: 1.5rem; /* 24px */
             font-weight: bold;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 0.625rem;
         }
 
         .gym-address {
-            font-size: 12px;
+            font-size: 0.75rem; /* 12px */
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 0.9375rem;
             line-height: 1.4;
         }
         
         .receipt-title {
-            font-size: 18px;
+            font-size: 1.125rem; /* 18px */
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 0.625rem;
         }
         
         .receipt-number {
-            font-size: 16px;
+            font-size: 1rem; /* 16px */
             color: #333;
             font-weight: bold;
         }
         
         .section {
-            margin-bottom: 25px;
+            margin-bottom: 1.5625rem;
         }
         
         .section-title {
-            font-size: 16px;
+            font-size: 1rem; /* 16px */
             font-weight: bold;
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 0.9375rem;
             border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+            padding-bottom: 0.3125rem;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem; /* 14px */
         }
         
         .label {
@@ -97,24 +106,24 @@
         }
         
         .amount {
-            font-size: 20px;
+            font-size: 1.25rem; /* 20px */
             color: #28a745;
             font-weight: bold;
         }
         
         .total-section {
             border-top: 2px solid #333;
-            padding-top: 20px;
-            margin-top: 30px;
+            padding-top: 1.25rem;
+            margin-top: 1.875rem;
         }
         
         .total-row {
             display: flex;
             justify-content: space-between;
-            font-size: 18px;
+            font-size: 1.125rem; /* 18px */
             font-weight: bold;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 0.625rem;
         }
         
         .discount-row {
@@ -128,24 +137,25 @@
         
         .footer {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: 2.5rem;
+            padding-top: 1.25rem;
             border-top: 1px solid #eee;
             color: #666;
-            font-size: 12px;
+            font-size: 0.75rem; /* 12px */
         }
         
         .print-button {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 1.25rem;
+            right: 1.25rem;
             background: #007bff;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.3125rem;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 0.875rem;
+            z-index: 1000;
         }
         
         .print-button:hover {
@@ -154,15 +164,15 @@
         
         .membership-dates {
             background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 15px;
+            padding: 0.9375rem;
+            border-radius: 0.3125rem;
+            margin-top: 0.9375rem;
         }
         
         .date-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
         }
         
         .date-row:last-child {
@@ -170,9 +180,215 @@
         }
 
         .cashier-section {
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: 2.5rem;
+            padding-top: 1.25rem;
             border-top: 1px solid #eee;
+        }
+
+        /* Tablet Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.75rem;
+            }
+            
+            .receipt {
+                max-width: 100%;
+                padding: 1.25rem;
+            }
+            
+            .gym-name {
+                font-size: 1.375rem; /* 22px */
+            }
+            
+            .gym-address {
+                font-size: 0.6875rem; /* 11px */
+            }
+            
+            .receipt-title {
+                font-size: 1rem; /* 16px */
+            }
+            
+            .receipt-number {
+                font-size: 0.9375rem; /* 15px */
+            }
+            
+            .section-title {
+                font-size: 0.9375rem; /* 15px */
+            }
+            
+            .info-row {
+                font-size: 0.8125rem; /* 13px */
+            }
+            
+            .amount {
+                font-size: 1.125rem; /* 18px */
+            }
+            
+            .total-row {
+                font-size: 1rem; /* 16px */
+            }
+            
+            .print-button {
+                top: 0.75rem;
+                right: 0.75rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.8125rem;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+                align-items: flex-start;
+                padding-top: 3rem;
+            }
+            
+            .receipt {
+                padding: 1rem;
+                border-radius: 0.375rem;
+            }
+            
+            .header {
+                padding-bottom: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .logo {
+                width: 5rem; /* 80px */
+            }
+            
+            .gym-name {
+                font-size: 1.25rem; /* 20px */
+            }
+            
+            .gym-address {
+                font-size: 0.625rem; /* 10px */
+            }
+            
+            .receipt-title {
+                font-size: 0.9375rem; /* 15px */
+            }
+            
+            .receipt-number {
+                font-size: 0.875rem; /* 14px */
+            }
+            
+            .section {
+                margin-bottom: 1.25rem;
+            }
+            
+            .section-title {
+                font-size: 0.875rem; /* 14px */
+                margin-bottom: 0.75rem;
+            }
+            
+            .info-row {
+                font-size: 0.75rem; /* 12px */
+                margin-bottom: 0.375rem;
+            }
+            
+            .amount {
+                font-size: 1rem; /* 16px */
+            }
+            
+            .total-row {
+                font-size: 0.9375rem; /* 15px */
+            }
+            
+            .total-section {
+                padding-top: 1rem;
+                margin-top: 1.5rem;
+            }
+            
+            .membership-dates {
+                padding: 0.75rem;
+            }
+            
+            .cashier-section {
+                margin-top: 2rem;
+                padding-top: 1rem;
+            }
+            
+            .footer {
+                margin-top: 2rem;
+                padding-top: 1rem;
+                font-size: 0.6875rem; /* 11px */
+            }
+            
+            .print-button {
+                top: 0.5rem;
+                right: 0.5rem;
+                padding: 0.375rem 0.75rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 360px) {
+            .receipt {
+                padding: 0.75rem;
+            }
+            
+            .gym-name {
+                font-size: 1.125rem; /* 18px */
+            }
+            
+            .gym-address {
+                font-size: 0.5625rem; /* 9px */
+            }
+            
+            .info-row {
+                font-size: 0.6875rem; /* 11px */
+            }
+            
+            .amount {
+                font-size: 0.9375rem; /* 15px */
+            }
+            
+            .total-row {
+                font-size: 0.875rem; /* 14px */
+            }
+        }
+
+        /* Large Desktop */
+        @media (min-width: 1200px) {
+            .receipt {
+                max-width: 32rem; /* 512px */
+                padding: 2rem;
+            }
+            
+            .gym-name {
+                font-size: 1.75rem; /* 28px */
+            }
+            
+            .gym-address {
+                font-size: 0.875rem; /* 14px */
+            }
+            
+            .receipt-title {
+                font-size: 1.25rem; /* 20px */
+            }
+            
+            .receipt-number {
+                font-size: 1.125rem; /* 18px */
+            }
+            
+            .section-title {
+                font-size: 1.125rem; /* 18px */
+            }
+            
+            .info-row {
+                font-size: 1rem; /* 16px */
+            }
+            
+            .amount {
+                font-size: 1.5rem; /* 24px */
+            }
+            
+            .total-row {
+                font-size: 1.25rem; /* 20px */
+            }
         }
     </style>
 </head>

@@ -20,6 +20,7 @@ class RegistrationForm {
         this.setupRealTimeValidation();
         this.setupFormSubmission();
         this.setupPhoneFormatting();
+        this.setupNameValidation();
     }
     
     setupPasswordVisibility() {
@@ -370,6 +371,39 @@ document.addEventListener('keydown', (e) => {
                 submitButton.click();
             }
         }
+    }
+
+    setupNameValidation() {
+        const nameFields = document.querySelectorAll('input[name="first_name"], input[name="last_name"]');
+        
+        nameFields.forEach(field => {
+            field.addEventListener('input', (e) => {
+                // Remove any non-letter characters and spaces
+                let value = e.target.value;
+                value = value.replace(/[^A-Za-z\s]/g, '');
+                
+                // Prevent multiple consecutive spaces
+                value = value.replace(/\s+/g, ' ');
+                
+                // Update the field value
+                e.target.value = value;
+            });
+            
+            field.addEventListener('keypress', (e) => {
+                // Prevent numbers and special characters
+                const char = String.fromCharCode(e.which);
+                if (!/[A-Za-z\s]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+            
+            field.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text');
+                const cleanPaste = paste.replace(/[^A-Za-z\s]/g, '').replace(/\s+/g, ' ');
+                e.target.value = cleanPaste;
+            });
+        });
     }
 });
 

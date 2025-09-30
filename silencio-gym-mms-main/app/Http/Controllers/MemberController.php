@@ -103,7 +103,7 @@ class MemberController extends Controller
         $availableUid = Member::getAvailableUid();
         
         if (!$availableUid) {
-            $redirectRoute = request()->is('employee/*') ? 'employee.members.index' : 'members.index';
+            $redirectRoute = request()->is('employee/*') ? 'employee.members' : 'members.index';
             return redirect()->route($redirectRoute)
                 ->with('error', 'No UIDs available in the pool. Please contact administrator.');
         }
@@ -137,7 +137,7 @@ class MemberController extends Controller
             throw $e; // Re-throw the exception
         }
 
-        $redirectRoute = request()->is('employee/*') ? 'employee.members.index' : 'members.index';
+        $redirectRoute = request()->is('employee/*') ? 'employee.members' : 'members.index';
         return redirect()->route($redirectRoute)
             ->with('success', 'Member created successfully!');
     }
@@ -216,7 +216,7 @@ class MemberController extends Controller
             ]);
         }
 
-        $redirectRoute = request()->is('employee/*') ? 'employee.members.index' : 'members.index';
+        $redirectRoute = request()->is('employee/*') ? 'employee.members' : 'members.index';
         return redirect()->route($redirectRoute)
             ->with('success', 'Member updated successfully!');
     }
@@ -235,7 +235,7 @@ class MemberController extends Controller
         
         $member->delete();
 
-        $redirectRoute = request()->is('employee/*') ? 'employee.members.index' : 'members.index';
+        $redirectRoute = request()->is('employee/*') ? 'employee.members' : 'members.index';
         return redirect()->route($redirectRoute)
             ->with('success', 'Member deleted successfully!');
     }

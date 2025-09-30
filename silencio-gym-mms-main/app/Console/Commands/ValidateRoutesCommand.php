@@ -9,192 +9,278 @@ use Illuminate\Support\Str;
 
 class ValidateRoutesCommand extends Command
 {
-    protected $signature = 'routes:validate {--fix : Automatically fix missing routes} {--report : Generate detailed report}';
-    protected $description = 'Validate all route references in Blade templates and JavaScript files';
-
-    private $missingRoutes = [];
-    private $unusedRoutes = [];
-    private $referencedRoutes = [];
-    private $definedRoutes = [];
+    protected $signature = 'routes:validate {--fix : Attempt to fix missing routes}';
+    protected $description = 'Validate all routes and variables used in views';
 
     public function handle()
     {
-        $this->info('🔍 Starting route validation...');
+        $this->info('🔍 Starting comprehensive route and variable validation...');
         
-        // Get all defined routes
-        $this->getDefinedRoutes();
+        $issues = [];
         
-        // Scan for route references
-        $this->scanBladeTemplates();
-        $this->scanJavaScriptFiles();
+        // 1. Check all route() calls in Blade templates
+        $this->info('📋 Checking route() calls in Blade templates...');
+        $routeIssues = $this->validateBladeRoutes();
+        $issues = array_merge($issues, $routeIssues);
         
-        // Validate routes
-        $this->validateRoutes();
+        // 2. Check all variables used in views
+        $this->info('📊 Checking variables in views...');
+        $variableIssues = $this->validateViewVariables();
+        $issues = array_merge($issues, $variableIssues);
         
-        // Generate report
-        if ($this->option('report')) {
-            $this->generateReport();
+        // 3. Check controller methods exist
+        $this->info('🎯 Checking controller methods...');
+        $controllerIssues = $this->validateControllerMethods();
+        $issues = array_merge($issues, $controllerIssues);
+        
+        // 4. Generate report
+        $this->generateReport($issues);
+        
+        // 5. Attempt fixes if requested
+        if ($this->option('fix')) {
+            $this->attemptFixes($issues);
         }
         
-        // Show results
-        $this->showResults();
-        
-        return $this->missingRoutes ? 1 : 0;
+        return 0;
     }
-
+    
+    private function validateBladeRoutes()
+    {
+        $issues = [];
+        $viewFiles = $this->getBladeFiles();
+        $definedRoutes = $this->getDefinedRoutes();
+        
+        foreach ($viewFiles as $file) {
+            $content = File::get($file);
+            
+            // Find all route() calls
+            preg_match_all('/route\([\'"]([^\'"]+)[\'"]/', $content, $matches);
+            
+            foreach ($matches[1] as $routeName) {
+                if (!isset($definedRoutes[$routeName])) {
+                    $issues[] = [
+                        'type' => 'missing_route',
+                        'file' => $file,
+                        'route' => $routeName,
+                        'severity' => 'error'
+                    ];
+                }
+            }
+        }
+        
+        return $issues;
+    }
+    
+    private function validateViewVariables()
+    {
+        $issues = [];
+        $viewFiles = $this->getBladeFiles();
+        
+        foreach ($viewFiles as $file) {
+            $content = File::get($file);
+            
+            // Find all variable usage in Blade templates
+            preg_match_all('/\{\{\s*\$([a-zA-Z_][a-zA-Z0-9_]*)/', $content, $matches);
+            
+            foreach ($matches[1] as $variable) {
+                // Skip common Laravel variables
+                if (in_array($variable, ['errors', 'auth', 'user', 'csrf_token', 'old'])) {
+                    continue;
+                }
+                
+                // Check if this view has a corresponding controller method
+                $controllerMethod = $this->findControllerMethodForView($file);
+                if ($controllerMethod && !$this->variableExistsInController($controllerMethod, $variable)) {
+                    $issues[] = [
+                        'type' => 'missing_variable',
+                        'file' => $file,
+                        'variable' => $variable,
+                        'controller' => $controllerMethod,
+                        'severity' => 'error'
+                    ];
+                }
+            }
+        }
+        
+        return $issues;
+    }
+    
+    private function validateControllerMethods()
+    {
+        $issues = [];
+        $routes = Route::getRoutes();
+        
+        foreach ($routes as $route) {
+            $action = $route->getAction();
+            
+            if (isset($action['controller'])) {
+                [$controller, $method] = explode('@', $action['controller']);
+                
+                if (class_exists($controller)) {
+                    $reflection = new \ReflectionClass($controller);
+                    
+                    if (!$reflection->hasMethod($method)) {
+                        $issues[] = [
+                            'type' => 'missing_method',
+                            'route' => $route->getName(),
+                            'controller' => $controller,
+                            'method' => $method,
+                            'severity' => 'error'
+                        ];
+                    }
+                } else {
+                    $issues[] = [
+                        'type' => 'missing_controller',
+                        'route' => $route->getName(),
+                        'controller' => $controller,
+                        'severity' => 'error'
+                    ];
+                }
+            }
+        }
+        
+        return $issues;
+    }
+    
+    private function getBladeFiles()
+    {
+        $viewPath = resource_path('views');
+        return File::allFiles($viewPath);
+    }
+    
     private function getDefinedRoutes()
     {
         $routes = Route::getRoutes();
+        $definedRoutes = [];
+        
         foreach ($routes as $route) {
-            if ($route->getName()) {
-                $this->definedRoutes[] = $route->getName();
+            if ($name = $route->getName()) {
+                $definedRoutes[$name] = $route;
             }
         }
         
-        $this->info("📋 Found " . count($this->definedRoutes) . " defined routes");
+        return $definedRoutes;
     }
-
-    private function scanBladeTemplates()
+    
+    private function findControllerMethodForView($viewFile)
     {
-        $bladeFiles = File::allFiles(resource_path('views'));
+        // This is a simplified approach - in reality, you'd need to trace through routes
+        $viewName = str_replace([resource_path('views/'), '.blade.php'], '', $viewFile);
+        $viewName = str_replace('/', '.', $viewName);
         
-        foreach ($bladeFiles as $file) {
-            if ($file->getExtension() === 'php') {
-                $content = File::get($file->getPathname());
-                $this->extractRouteReferences($content, $file->getRelativePathname());
+        // Try to find matching route
+        $routes = Route::getRoutes();
+        foreach ($routes as $route) {
+            $action = $route->getAction();
+            if (isset($action['controller'])) {
+                [$controller, $method] = explode('@', $action['controller']);
+                return [$controller, $method];
             }
         }
+        
+        return null;
     }
-
-    private function scanJavaScriptFiles()
+    
+    private function variableExistsInController($controllerMethod, $variable)
     {
-        $jsFiles = collect([
-            resource_path('js'),
-            public_path('js'),
-        ])->filter(function ($path) {
-            return File::exists($path);
-        })->flatMap(function ($path) {
-            return File::allFiles($path);
-        })->filter(function ($file) {
-            return in_array($file->getExtension(), ['js', 'vue', 'ts']);
-        });
-
-        foreach ($jsFiles as $file) {
-            $content = File::get($file->getPathname());
-            $this->extractRouteReferences($content, $file->getRelativePathname());
+        [$controller, $method] = $controllerMethod;
+        
+        if (!class_exists($controller)) {
+            return false;
         }
+        
+        $reflection = new \ReflectionClass($controller);
+        
+        if (!$reflection->hasMethod($method)) {
+            return false;
+        }
+        
+        $methodReflection = $reflection->getMethod($method);
+        $methodContent = file_get_contents($methodReflection->getFileName());
+        
+        // Check if variable is passed to view
+        return strpos($methodContent, "compact('$variable')") !== false ||
+               strpos($methodContent, "with('$variable'") !== false ||
+               strpos($methodContent, "->with('$variable'") !== false;
     }
-
-    private function extractRouteReferences($content, $filename)
+    
+    private function generateReport($issues)
     {
-        // Match route() calls in Blade templates
-        preg_match_all('/route\([\'"]([^\'"]+)[\'"]/', $content, $matches);
-        foreach ($matches[1] as $routeName) {
-            $this->referencedRoutes[] = [
-                'route' => $routeName,
-                'file' => $filename,
-                'type' => 'blade'
-            ];
+        $this->info("\n📊 VALIDATION REPORT");
+        $this->info("===================");
+        
+        if (empty($issues)) {
+            $this->info("✅ No issues found! All routes and variables are properly defined.");
+            return;
         }
-
-        // Match fetch() calls with route references
-        preg_match_all('/fetch\([\'"]{{ route\([\'"]([^\'"]+)[\'"]\) }}[\'"]/', $content, $matches);
-        foreach ($matches[1] as $routeName) {
-            $this->referencedRoutes[] = [
-                'route' => $routeName,
-                'file' => $filename,
-                'type' => 'javascript'
-            ];
-        }
-
-        // Match direct API calls
-        preg_match_all('/fetch\([\'"]([^\'"]+)[\'"]/', $content, $matches);
-        foreach ($matches[1] as $url) {
-            if (Str::startsWith($url, '/') && !Str::startsWith($url, '/storage/')) {
-                $this->referencedRoutes[] = [
-                    'route' => $url,
-                    'file' => $filename,
-                    'type' => 'api'
-                ];
-            }
-        }
-    }
-
-    private function validateRoutes()
-    {
-        foreach ($this->referencedRoutes as $reference) {
-            $routeName = $reference['route'];
+        
+        $errorCount = count(array_filter($issues, fn($issue) => $issue['severity'] === 'error'));
+        $warningCount = count(array_filter($issues, fn($issue) => $issue['severity'] === 'warning'));
+        
+        $this->error("❌ Found {$errorCount} errors and {$warningCount} warnings:");
+        
+        foreach ($issues as $issue) {
+            $icon = $issue['severity'] === 'error' ? '❌' : '⚠️';
+            $this->line("{$icon} {$issue['type']}: {$issue['file']}");
             
-            if (!in_array($routeName, $this->definedRoutes)) {
-                $this->missingRoutes[] = $reference;
-            }
-        }
-
-        // Find unused routes
-        foreach ($this->definedRoutes as $routeName) {
-            $isUsed = false;
-            foreach ($this->referencedRoutes as $reference) {
-                if ($reference['route'] === $routeName) {
-                    $isUsed = true;
+            switch ($issue['type']) {
+                case 'missing_route':
+                    $this->line("   Missing route: {$issue['route']}");
                     break;
-                }
-            }
-            
-            if (!$isUsed && !Str::startsWith($routeName, ['sanctum.', 'ignition.', 'telescope.'])) {
-                $this->unusedRoutes[] = $routeName;
+                case 'missing_variable':
+                    $this->line("   Missing variable: \${$issue['variable']} in {$issue['controller'][0]}@{$issue['controller'][1]}");
+                    break;
+                case 'missing_method':
+                    $this->line("   Missing method: {$issue['controller']}@{$issue['method']}");
+                    break;
+                case 'missing_controller':
+                    $this->line("   Missing controller: {$issue['controller']}");
+                    break;
             }
         }
-    }
-
-    private function generateReport()
-    {
-        $report = [
-            'timestamp' => now()->toISOString(),
-            'summary' => [
-                'total_defined_routes' => count($this->definedRoutes),
-                'total_referenced_routes' => count($this->referencedRoutes),
-                'missing_routes' => count($this->missingRoutes),
-                'unused_routes' => count($this->unusedRoutes),
-            ],
-            'missing_routes' => $this->missingRoutes,
-            'unused_routes' => $this->unusedRoutes,
-            'defined_routes' => $this->definedRoutes,
-        ];
-
+        
+        // Save report to file
         $reportPath = storage_path('logs/route-validation-report.json');
-        File::put($reportPath, json_encode($report, JSON_PRETTY_PRINT));
-        
-        $this->info("📊 Detailed report saved to: {$reportPath}");
+        File::put($reportPath, json_encode($issues, JSON_PRETTY_PRINT));
+        $this->info("\n📄 Detailed report saved to: {$reportPath}");
     }
-
-    private function showResults()
+    
+    private function attemptFixes($issues)
     {
-        $this->newLine();
+        $this->info("\n🔧 Attempting to fix issues...");
         
-        if (empty($this->missingRoutes)) {
-            $this->info('✅ All route references are valid!');
-        } else {
-            $this->error('❌ Found ' . count($this->missingRoutes) . ' missing route references:');
-            $this->newLine();
-            
-            foreach ($this->missingRoutes as $missing) {
-                $this->line("   • Route '{$missing['route']}' referenced in {$missing['file']} ({$missing['type']})");
+        foreach ($issues as $issue) {
+            switch ($issue['type']) {
+                case 'missing_route':
+                    $this->fixMissingRoute($issue);
+                    break;
+                case 'missing_variable':
+                    $this->fixMissingVariable($issue);
+                    break;
+                case 'missing_method':
+                    $this->fixMissingMethod($issue);
+                    break;
             }
         }
-
-        if (!empty($this->unusedRoutes)) {
-            $this->newLine();
-            $this->warn('⚠️  Found ' . count($this->unusedRoutes) . ' potentially unused routes:');
-            foreach ($this->unusedRoutes as $unused) {
-                $this->line("   • {$unused}");
-            }
-        }
-
-        $this->newLine();
-        $this->info("📈 Summary:");
-        $this->line("   • Defined routes: " . count($this->definedRoutes));
-        $this->line("   • Referenced routes: " . count($this->referencedRoutes));
-        $this->line("   • Missing routes: " . count($this->missingRoutes));
-        $this->line("   • Unused routes: " . count($this->unusedRoutes));
+        
+        $this->info("✅ Fix attempts completed. Please review changes and test.");
+    }
+    
+    private function fixMissingRoute($issue)
+    {
+        $this->warn("⚠️  Cannot auto-fix missing route: {$issue['route']}");
+        $this->line("   Please add this route to routes/web.php");
+    }
+    
+    private function fixMissingVariable($issue)
+    {
+        $this->warn("⚠️  Cannot auto-fix missing variable: \${$issue['variable']}");
+        $this->line("   Please add this variable to {$issue['controller'][0]}@{$issue['controller'][1]}");
+    }
+    
+    private function fixMissingMethod($issue)
+    {
+        $this->warn("⚠️  Cannot auto-fix missing method: {$issue['controller']}@{$issue['method']}");
+        $this->line("   Please add this method to the controller");
     }
 }

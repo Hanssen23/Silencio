@@ -1,9 +1,5 @@
-@extends('components.layout')
-
-@section('title', 'Terms and Conditions')
-
-@section('content')
-<div class="min-h-screen bg-gray-50 py-8">
+<x-layout>
+    <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -255,4 +251,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-layout>

@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/active-members', [RfidController::class, 'getActiveMembers'])->name('active-members');
         Route::get('/dashboard-stats', [RfidController::class, 'getDashboardStats'])->name('dashboard-stats');
         Route::get('/member-suggestions', [RfidController::class, 'getMemberSuggestions'])->name('member-suggestions');
+        Route::post('/auto-tapout', [RfidController::class, 'manualAutoTapOut'])->name('auto-tapout');
     });
 
     // Member Routes
@@ -96,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
         Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/print', [PaymentController::class, 'print'])->name('print');
+        Route::get('/{id}/details', [PaymentController::class, 'details'])->name('details');
         Route::get('/export/csv', [PaymentController::class, 'exportCsv'])->name('export_csv');
     });
 
@@ -142,6 +144,7 @@ Route::middleware(['auth'])->group(function () {
         // Employee Analytics Routes
         Route::prefix('analytics')->name('analytics.')->group(function () {
             Route::get('/weekly-attendance', [AnalyticsController::class, 'weeklyAttendance'])->name('weekly-attendance');
+            Route::get('/weekly-revenue', [AnalyticsController::class, 'weeklyRevenue'])->name('weekly-revenue');
             Route::get('/monthly-revenue', [AnalyticsController::class, 'monthlyRevenue'])->name('monthly-revenue');
             Route::get('/dashboard-stats', [AnalyticsController::class, 'getDashboardStats'])->name('dashboard-stats');
         });
@@ -163,9 +166,13 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/process-payment', [EmployeeController::class, 'processPayment'])->name('process-payment');
             Route::get('/plans', [EmployeeController::class, 'plans'])->name('plans.index');
             Route::get('/payments', [EmployeeController::class, 'payments'])->name('payments');
+            Route::get('/payments/{id}/details', [EmployeeController::class, 'paymentDetails'])->name('payments.details');
             Route::get('/payments/export/csv', [EmployeeController::class, 'exportPaymentsCsv'])->name('payments.export_csv');
             Route::get('/payments/{id}/print', [EmployeeController::class, 'printPayment'])->name('payments.print');
         });
+        
+        // Employee Membership Plans Routes
+        Route::get('/membership-plans', [EmployeeController::class, 'plans'])->name('membership-plans');
         
         // Employee Membership Plans API Routes
         Route::prefix('membership-plans')->name('membership-plans.')->group(function () {

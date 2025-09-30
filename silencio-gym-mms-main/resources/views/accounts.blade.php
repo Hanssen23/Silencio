@@ -711,9 +711,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex items-center space-x-4">
                             ${account.role === 'admin' ? `
-                                <button onclick="editAccount(${account.id})" class="text-blue-600 hover:text-blue-900" style="color: #2563EB; font-size: 0.875rem; font-weight: 500;">
-                                    Edit
-                                </button>
+                                <span class="text-gray-400 text-sm">No actions available</span>
                             ` : `
                                 <button onclick="toggleAccountStatus(${account.id})" class="text-green-600 hover:text-green-900" style="color: ${isActive ? '#DC2626' : '#059669'}; font-size: 0.875rem; font-weight: 500;">
                                     ${isActive ? 'Deactivate' : 'Activate'}

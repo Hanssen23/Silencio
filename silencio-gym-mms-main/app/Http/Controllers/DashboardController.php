@@ -16,11 +16,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Cache key with current hour to refresh hourly
-        $cacheKey = 'dashboard_data_' . Carbon::now()->format('Y-m-d_H');
+        // Get current user role for data filtering
+        $user = auth()->user();
+        $isEmployee = $user && $user->role === 'employee';
+        
+        // Cache key with current hour and role to refresh hourly
+        $cacheKey = 'dashboard_data_' . ($isEmployee ? 'employee_' : 'admin_') . Carbon::now()->format('Y-m-d_H');
         
         // Get dashboard data from cache or compute it
-        $dashboardData = Cache::remember($cacheKey, 3600, function () {
+        $dashboardData = Cache::remember($cacheKey, 3600, function () use ($isEmployee) {
             // Get all counts in a single query where possible (SQLite compatible)
             $counts = DB::select("
                 SELECT 
@@ -38,6 +42,41 @@ class DashboardController extends Controller
             $thisWeekRevenue = Payment::completed()
                 ->thisWeek()
                 ->sum('amount');
+            
+            // Get this month's revenue
+            $thisMonthRevenue = Payment::completed()
+                ->whereBetween('payment_date', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('amount');
+
+            // Get expiring memberships this week
+            $expiringMembershipsThisWeek = \App\Models\Member::where('status', 'active')
+                ->where(function($query) {
+                    $query->where('membership_expires_at', '>', now())
+                          ->where('membership_expires_at', '<=', now()->addWeek())
+                          ->orWhereHas('payments', function($q) {
+                              $q->where('membership_expiration_date', '>', now())
+                                ->where('membership_expiration_date', '<=', now()->addWeek());
+                          })
+                          ->orWhereHas('membershipPeriods', function($q) {
+                              $q->where('expiration_date', '>', now())
+                                ->where('expiration_date', '<=', now()->addWeek());
+                          });
+                })->count();
+            
+            // Get expiring memberships this month
+            $expiringMembershipsThisMonth = \App\Models\Member::where('status', 'active')
+                ->where(function($query) {
+                    $query->where('membership_expires_at', '>', now())
+                          ->where('membership_expires_at', '<=', now()->endOfMonth())
+                          ->orWhereHas('payments', function($q) {
+                              $q->where('membership_expiration_date', '>', now())
+                                ->where('membership_expiration_date', '<=', now()->endOfMonth());
+                          })
+                          ->orWhereHas('membershipPeriods', function($q) {
+                              $q->where('expiration_date', '>', now())
+                                ->where('expiration_date', '<=', now()->endOfMonth());
+                          });
+                })->count();
 
             // Get recent RFID logs with member info in a single query
             $recentRfidLogs = RfidLog::select('rfid_logs.*', 'members.first_name', 'members.last_name')
@@ -59,8 +98,11 @@ class DashboardController extends Controller
                 'todayAttendance' => $counts->today_attendance_count,
                 'thisWeekAttendance' => $counts->week_attendance_count,
                 'thisWeekRevenue' => $thisWeekRevenue,
+                'thisMonthRevenue' => $thisMonthRevenue,
                 'pendingPaymentsCount' => $counts->pending_payments_count,
                 'expiringMembershipsCount' => $counts->expiring_memberships_count,
+                'expiringMembershipsThisWeek' => $expiringMembershipsThisWeek,
+                'expiringMembershipsThisMonth' => $expiringMembershipsThisMonth,
                 'expiredMembershipsToday' => $counts->expired_memberships_count,
                 'unknownCardsToday' => $counts->unknown_cards_count,
                 'recentRfidLogs' => $recentRfidLogs,

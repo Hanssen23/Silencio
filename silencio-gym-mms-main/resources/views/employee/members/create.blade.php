@@ -8,7 +8,7 @@
             <!-- Header with Back Button -->
             <div class="mb-6 sticky top-20 z-10 -mx-6 px-6 py-3 bg-white/90 backdrop-blur border-b border-gray-200">
                 <div class="flex items-center justify-between gap-4">
-                    <a href="{{ route('employee.members.index') }}" class="flex items-center gap-2 text-black hover:text-blue-600 transition-colors duration-200">
+                    <a href="{{ route('employee.members') }}" class="flex items-center gap-2 text-black hover:text-blue-600 transition-colors duration-200">
                         <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
@@ -145,7 +145,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
                         </button>
-                        <a href="{{ route('employee.members.index') }}" 
+                        <a href="{{ route('employee.members') }}" 
                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
                             Cancel
                         </a>
