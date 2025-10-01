@@ -1,0 +1,68 @@
+# Environment files
+.env
+.env.local
+.env.production
+.env.backup
+
+# Sensitive configuration files
+deployment-config.conf
+auth.json
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Database backups
+*.sql
+*.db
+*.sqlite
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node modules
+node_modules/
+
+# Composer
+vendor/
+
+# Laravel specific
+/storage/*.key
+/storage/pail
+/public/build
+/public/hot
+/public/storage
+/.phpunit.cache
+/.phpunit.result.cache
+
+# Deployment artifacts
+deployment-artifacts/
+build/
+dist/

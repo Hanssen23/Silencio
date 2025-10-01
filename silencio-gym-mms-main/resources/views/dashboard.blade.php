@@ -1,7 +1,9 @@
-
-
 <x-layout>
-    <x-nav></x-nav>
+    @if(auth()->user()->role === 'employee')
+        <x-nav-employee></x-nav-employee>
+    @else
+        <x-nav></x-nav>
+    @endif
     <div class="flex-1 bg-gray-100">
         <x-topbar>Dashboard</x-topbar>
 
@@ -44,7 +46,7 @@
                         </div>
                         
                         <!-- Weekly Revenue -->
-                        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+                        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4 sm:p-6">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs sm:text-sm font-medium text-yellow-700 mb-1">Weekly Revenue</p>
@@ -100,16 +102,16 @@
                         </div>
 
                         <!-- Expiring Memberships -->
-                        <div class="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+                        <div class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-4 sm:p-6">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs sm:text-sm font-medium text-orange-700 mb-1">Expiring Soon</p>
-                                    <p class="text-xl sm:text-2xl font-bold text-orange-900">{{ $expiringMembershipsCount ?? 0 }}</p>
-                                    <p class="text-xs text-orange-600 mt-1">This week: {{ $expiringMembershipsThisWeek ?? 0 }}</p>
+                                    <p class="text-xs sm:text-sm font-medium text-red-700 mb-1">Expiring</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-red-900">{{ $expiringMembershipsCount }}</p>
+                                    <p class="text-xs text-red-600 mt-1">This week: {{ $expiringMembershipsThisWeek ?? 0 }}</p>
                                 </div>
-                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-200 rounded-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-200 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
                                 </div>
                             </div>
@@ -117,21 +119,21 @@
                     </div>
 
                     <!-- Charts Section -->
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <!-- Weekly Attendance Chart -->
-                        <div class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-base sm:text-lg font-semibold text-gray-900">Weekly Attendance Trend</h3>
+                                <h3 class="text-lg font-semibold text-gray-900">Weekly Attendance Trend</h3>
                                 <div class="flex items-center gap-2">
                                     <!-- Calendar-style date picker -->
                                     <div class="relative">
-                                        <button onclick="toggleAttendanceCalendar()" class="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]">
-                                            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <button onclick="toggleAttendanceCalendar()" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                             </svg>
-                                            <span id="attendanceDateText" class="hidden sm:inline">Last 7 days</span>
+                                            <span id="attendanceDateText">Last 7 days</span>
                                         </button>
-                                        <div id="attendanceCalendar" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden">
+                                        <div id="attendanceCalendar" class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden">
                                             <div class="p-4">
                                                 <!-- Calendar Header -->
                                                 <div class="flex items-center justify-between mb-4">
@@ -184,28 +186,28 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="h-48 sm:h-56 lg:h-64">
+                            <div class="h-64">
                                 <canvas id="weeklyAttendanceChart"></canvas>
                             </div>
-                            <div class="mt-2 text-xs sm:text-sm text-gray-500 text-center">
+                            <div class="mt-2 text-sm text-gray-500 text-center">
                                 <span id="attendanceTotal">Total: 0</span> check-ins
                             </div>
-                </div>
+                        </div>
 
                         <!-- Weekly Revenue Chart -->
-                        <div class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-base sm:text-lg font-semibold text-gray-900">Weekly Revenue Trend</h3>
+                                <h3 class="text-lg font-semibold text-gray-900">Weekly Revenue Trend</h3>
                                 <div class="flex items-center gap-2">
                                     <!-- Calendar-style date picker -->
                                     <div class="relative">
-                                        <button onclick="toggleRevenueCalendar()" class="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[44px]">
-                                            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <button onclick="toggleRevenueCalendar()" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                             </svg>
-                                            <span id="revenueDateText" class="hidden sm:inline">May 2024</span>
+                                            <span id="revenueDateText">May 2024</span>
                                         </button>
-                                        <div id="revenueCalendar" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden">
+                                        <div id="revenueCalendar" class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden">
                                             <div class="p-4">
                                                 <!-- Calendar Header -->
                                                 <div class="flex items-center justify-between mb-4">
@@ -258,10 +260,10 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="h-48 sm:h-56 lg:h-64">
+                            <div class="h-64">
                                 <canvas id="weeklyRevenueChart"></canvas>
                             </div>
-                            <div class="mt-2 text-xs sm:text-sm text-gray-500 text-center">
+                            <div class="mt-2 text-sm text-gray-500 text-center">
                                 <span id="revenueTotal">Total: ₱0</span>
                             </div>
                         </div>
@@ -335,6 +337,7 @@
                 font-size: 0.75rem;
                 padding: 6px 0;
             }
+        }
     </style>
 
     <script>
@@ -470,7 +473,11 @@
 
         function loadRealTimeData() {
             // Load weekly attendance data
-            fetch(`{{ route("analytics.weekly-attendance") }}?days=${currentAttendancePeriod}`)
+            @if(auth()->user()->role === 'employee')
+                fetch(`{{ route("employee.analytics.weekly-attendance") }}?days=${currentAttendancePeriod}`)
+            @else
+                fetch(`{{ route("analytics.weekly-attendance") }}?days=${currentAttendancePeriod}`)
+            @endif
                 .then(response => response.json())
                 .then(data => {
                     if (weeklyChart) {
@@ -484,7 +491,11 @@
                 .catch(error => console.error('Error loading weekly attendance:', error));
 
             // Load weekly revenue data
-            fetch(`{{ route("analytics.weekly-revenue") }}?days=7`)
+            @if(auth()->user()->role === 'employee')
+                fetch(`{{ route("employee.analytics.weekly-revenue") }}?days=7`)
+            @else
+                fetch(`{{ route("analytics.weekly-revenue") }}?days=7`)
+            @endif
                 .then(response => response.json())
                 .then(data => {
                     if (revenueChart) {
@@ -498,7 +509,11 @@
                 .catch(error => console.error('Error loading weekly revenue:', error));
 
             // Load dashboard stats
-            fetch('{{ route("analytics.dashboard-stats") }}')
+            @if(auth()->user()->role === 'employee')
+                fetch('{{ route("employee.analytics.dashboard-stats") }}')
+            @else
+                fetch('{{ route("analytics.dashboard-stats") }}')
+            @endif
                 .then(response => response.json())
                 .then(data => {
                     // Update current active members count
@@ -789,7 +804,11 @@
 
         // Refresh functions
         function refreshAttendanceChart() {
-            fetch(`{{ route("analytics.weekly-attendance") }}?days=${currentAttendancePeriod}`)
+            @if(auth()->user()->role === 'employee')
+                fetch(`{{ route("employee.analytics.weekly-attendance") }}?days=${currentAttendancePeriod}`)
+            @else
+                fetch(`{{ route("analytics.weekly-attendance") }}?days=${currentAttendancePeriod}`)
+            @endif
                 .then(response => response.json())
                 .then(data => {
                     if (weeklyChart) {
@@ -803,7 +822,13 @@
         }
 
         function refreshRevenueChart() {
-            fetch(`{{ route("analytics.weekly-revenue") }}?days=7`)
+            const month = currentRevenueDate.getMonth() + 1;
+            const year = currentRevenueDate.getFullYear();
+            @if(auth()->user()->role === 'employee')
+                fetch(`{{ route("employee.analytics.weekly-revenue") }}?days=7`)
+            @else
+                fetch(`{{ route("analytics.weekly-revenue") }}?days=7`)
+            @endif
                 .then(response => response.json())
                 .then(data => {
                     if (revenueChart) {
@@ -838,7 +863,6 @@
                 revenueCalendarVisible = false;
             }
         });
-
 
     </script>
 </x-layout>

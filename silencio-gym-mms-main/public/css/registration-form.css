@@ -162,58 +162,49 @@ body.registration-page .flex {
 .phone-input-container {
     display: flex;
     align-items: center;
-    background-color: #ffffff;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 0.5rem 1rem;
-    transition: all 0.3s ease;
     position: relative;
 }
 
-.phone-input-container:focus-within {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    transform: translateY(-1px);
-}
-
-.phone-input-container.error {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
 
 .flag-icon {
-    width: 24px;
-    height: 16px;
+    width: 20px;
+    height: 14px;
     border-radius: 2px;
     margin-right: 0.5rem;
+    flex-shrink: 0;
 }
 
 .country-code {
-    font-weight: 600;
+    font-weight: 500;
     color: #374151;
     margin-right: 0.5rem;
+    font-size: 0.875rem;
+    flex-shrink: 0;
 }
 
 .separator-line {
     width: 1px;
-    height: 20px;
+    height: 16px;
     background-color: #d1d5db;
     margin-right: 0.75rem;
+    flex-shrink: 0;
 }
 
 .phone-input {
     flex: 1;
     border: none;
     outline: none;
-    font-size: 1rem;
-    color: #1f2937;
     background: transparent;
-    padding: 0.375rem 0;
+    padding: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: none;
 }
 
 .phone-input::placeholder {
     color: #9ca3af;
 }
+
 
 /* Password Input Container */
 .password-input-container {
@@ -492,7 +483,7 @@ body.registration-page .flex {
     }
     
     .form-input {
-        padding: 0.75rem;
+        padding: 0.5rem 0.75rem;
     }
     
     .submit-button {

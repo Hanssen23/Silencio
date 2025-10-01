@@ -2,7 +2,8 @@
     <div class="flex items-center justify-center min-h-screen w-full p-2 sm:p-4 relative">
         <!-- Background Image -->
         <div class="absolute inset-0 z-0">
-            </div>
+            <img class="w-full h-full object-cover opacity-10" src="{{ asset('images/gym-image.png') }}" alt="Gym Background">
+        </div>
         
         <div class="flex flex-col lg:flex-row items-center justify-center w-full max-w-sm sm:max-w-md lg:max-w-4xl rounded-lg shadow-lg overflow-hidden bg-white relative z-10">
             <div class="flex flex-col flex-1 justify-center items-center gap-3 sm:gap-4 lg:gap-5 p-4 sm:p-6 lg:p-8 w-full">
@@ -56,13 +57,13 @@
                     <!-- First Name -->
                     <div class="mb-3 sm:mb-4 lg:mb-5">
                         <label for="first_name" class="block mb-1 sm:mb-2 text-xs sm:text-sm font-medium text-gray-900">First name</label>
-                        <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" class="bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 sm:p-3 lg:p-2.5 min-h-[40px] sm:min-h-[44px] shadow-sm" placeholder="Enter your first name" required />
+                        <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" class="bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 sm:p-3 lg:p-2.5 min-h-[40px] sm:min-h-[44px] shadow-sm" placeholder="Enter your first name" pattern="[A-Za-z\s]+" title="Only letters and spaces are allowed" required />
                     </div>
                     
                     <!-- Last Name -->
                     <div class="mb-3 sm:mb-4 lg:mb-5">
                         <label for="last_name" class="block mb-1 sm:mb-2 text-xs sm:text-sm font-medium text-gray-900">Last name</label>
-                        <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" class="bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 sm:p-3 lg:p-2.5 min-h-[40px] sm:min-h-[44px] shadow-sm" placeholder="Enter your last name" required />
+                        <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" class="bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 sm:p-3 lg:p-2.5 min-h-[40px] sm:min-h-[44px] shadow-sm" placeholder="Enter your last name" pattern="[A-Za-z\s]+" title="Only letters and spaces are allowed" required />
                     </div>
                     
                     <!-- Email -->
@@ -74,11 +75,11 @@
                     <!-- Mobile Number -->
                     <div class="mb-3 sm:mb-4 lg:mb-5">
                         <label for="mobile_number" class="block mb-1 sm:mb-2 text-xs sm:text-sm font-medium text-gray-900">Mobile number</label>
-                        <div class="phone-input-container min-h-[40px] sm:min-h-[44px]">
+                        <div class="phone-input-container bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus-within:ring-blue-500 focus-within:border-blue-500 block w-full p-2 sm:p-3 lg:p-2.5 min-h-[40px] sm:min-h-[44px] shadow-sm">
                             <img src="https://flagcdn.com/w40/ph.png" alt="Philippines" class="flag-icon w-5 h-3 sm:w-6 sm:h-4">
                             <span class="country-code text-sm sm:text-base">+63</span>
                             <div class="separator-line"></div>
-                            <input type="tel" name="mobile_number" id="mobile_number" value="{{ old('mobile_number') }}" class="bg-white border-2 border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm" placeholder="912 345 6789" maxlength="13" required />
+                            <input type="tel" name="mobile_number" id="mobile_number" value="{{ old('mobile_number') }}" class="phone-input" placeholder="912 345 6789" maxlength="13" required />
                         </div>
                         <p class="mt-1 text-xs text-gray-500">Enter your 10-digit mobile number (e.g., 912 345 6789)</p>
                     </div>

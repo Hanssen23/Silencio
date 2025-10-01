@@ -1,15 +1,4 @@
-@props(['isEmployee' => false])
-
-<x-layout>
-    @if($isEmployee)
-        <x-nav-employee></x-nav-employee>
-    @else
-        <x-nav></x-nav>
-    @endif
-    <div class="flex-1 bg-white">
-        <x-topbar>All Payments</x-topbar>
-
-        <div class="bg-white min-h-screen p-4 sm:p-6 stable-layout resize-handler">
+<x-payments-page :isEmployee="true" />
             <!-- Header with Quick Actions -->
             <div class="mb-6 sm:mb-8">
                 <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6 lg:p-8" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -19,20 +8,20 @@
                             <p class="text-base sm:text-lg mt-2" style="color: #6B7280;">View and manage all payment transactions</p>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 header-actions">
-                            <a href="{{ $isEmployee ? route('employee.membership.manage-member') : route('membership.manage-member') }}" class="inline-flex items-center justify-center px-4 sm:px-6 py-3 text-white rounded-lg transition-colors shadow-sm min-h-[44px] w-full sm:w-auto" style="background-color: #2563EB;" onmouseover="this.style.backgroundColor='#1D4ED8'" onmouseout="this.style.backgroundColor='#2563EB'">
+                            <a href="{{ route('employee.membership.manage-member') }}" class="inline-flex items-center justify-center px-4 sm:px-6 py-3 text-white rounded-lg transition-colors shadow-sm min-h-[44px] w-full sm:w-auto" style="background-color: #2563EB;" onmouseover="this.style.backgroundColor='#1D4ED8'" onmouseout="this.style.backgroundColor='#2563EB'">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
                                 <span class="text-sm sm:text-base">New Payment</span>
                             </a>
-                            <a href="{{ $isEmployee ? route('employee.membership-plans') : route('membership.plans.index') }}" class="inline-flex items-center justify-center px-4 sm:px-6 py-3 text-white rounded-lg transition-colors shadow-sm min-h-[44px] w-full sm:w-auto" style="background-color: #6B7280;" onmouseover="this.style.backgroundColor='#4B5563'" onmouseout="this.style.backgroundColor='#6B7280'">
+                            <a href="{{ route('employee.membership-plans') }}" class="inline-flex items-center justify-center px-4 sm:px-6 py-3 text-white rounded-lg transition-colors shadow-sm min-h-[44px] w-full sm:w-auto" style="background-color: #6B7280;" onmouseover="this.style.backgroundColor='#4B5563'" onmouseout="this.style.backgroundColor='#6B7280'">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 </svg>
                                 <span class="text-sm sm:text-base">Manage Plans</span>
                             </a>
-                            <a href="{{ $isEmployee ? route('employee.membership.payments.export_csv', request()->query()) : route('membership.payments.export_csv', request()->query()) }}" class="inline-flex items-center justify-center px-4 sm:px-6 py-3 text-white rounded-lg transition-colors shadow-sm min-h-[44px] w-full sm:w-auto" style="background-color: #6B7280;" onmouseover="this.style.backgroundColor='#4B5563'" onmouseout="this.style.backgroundColor='#6B7280'">
+                            <a href="{{ route('employee.membership.payments.export_csv', request()->query()) }}" class="inline-flex items-center justify-center px-4 sm:px-6 py-3 text-white rounded-lg transition-colors shadow-sm min-h-[44px] w-full sm:w-auto" style="background-color: #6B7280;" onmouseover="this.style.backgroundColor='#4B5563'" onmouseout="this.style.backgroundColor='#6B7280'">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
@@ -71,7 +60,7 @@
 
             <!-- Filter Section -->
             <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-6" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <form method="GET" action="{{ $isEmployee ? route('employee.membership.payments') : route('membership.payments.index') }}" id="filterForm" class="w-full">
+                <form method="GET" action="{{ route('employee.membership.payments') }}" id="filterForm" class="w-full">
                     <div class="filter-section grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                             <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
@@ -104,7 +93,7 @@
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                             Apply Filters
                         </button>
-                        <a href="{{ $isEmployee ? route('employee.membership.payments') : route('membership.payments.index') }}" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors text-center">
+                        <a href="{{ route('employee.membership.payments') }}" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors text-center">
                             Clear Filters
                         </a>
                     </div>
@@ -167,7 +156,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                 </svg>
                                             </button>
-                                            <a href="{{ $isEmployee ? route('employee.membership.payments.print', $payment->id) : route('membership.payments.print', $payment->id) }}" class="p-2 text-gray-600 hover:bg-gray-50 rounded-md transition-colors" title="Print Receipt" aria-label="Print payment receipt">
+                                            <a href="{{ route('employee.membership.payments.print', $payment->id) }}" class="p-2 text-gray-600 hover:bg-gray-50 rounded-md transition-colors" title="Print Receipt" aria-label="Print payment receipt">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
                                                 </svg>
@@ -398,10 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Payment details modal functions
 function viewPaymentDetails(paymentId) {
-    const isEmployee = window.location.pathname.includes('/employee');
-    const url = isEmployee ? `/employee/membership/payments/${paymentId}/details` : `/membership/payments/${paymentId}/details`;
-    
-    fetch(url)
+    fetch(`/employee/membership/payments/${paymentId}/details`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {

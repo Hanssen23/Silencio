@@ -62,19 +62,15 @@
                     
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
                         <button onclick="startRfidSystem()" id="start-rfid-control-btn" 
-                                class="px-6 sm:px-8 py-3 sm:py-4 text-white text-base sm:text-lg rounded-lg transition-colors flex items-center justify-center gap-3 min-h-[44px] w-full sm:w-auto" 
-                                style="background-color: #059669;" 
-                                onmouseover="this.style.backgroundColor='#047857'" 
-                                onmouseout="this.style.backgroundColor='#059669'">
+                                class="px-6 sm:px-8 py-3 sm:py-4 text-white text-base sm:text-lg rounded-lg flex items-center justify-center gap-3 min-h-[44px] w-full sm:w-auto" 
+                                style="background-color: #059669;">
                             <span class="text-lg sm:text-xl">▶️</span>
                             <span class="text-sm sm:text-base">Start RFID</span>
                         </button>
                         
                         <button onclick="stopRfidSystem()" id="stop-rfid-control-btn" 
-                                class="px-6 sm:px-8 py-3 sm:py-4 text-white text-base sm:text-lg rounded-lg transition-colors flex items-center justify-center gap-3 min-h-[44px] w-full sm:w-auto" 
-                                style="background-color: #DC2626;" 
-                                onmouseover="this.style.backgroundColor='#B91C1C'" 
-                                onmouseout="this.style.backgroundColor='#DC2626'">
+                                class="px-6 sm:px-8 py-3 sm:py-4 text-white text-base sm:text-lg rounded-lg flex items-center justify-center gap-3 min-h-[44px] w-full sm:w-auto" 
+                                style="background-color: #DC2626;">
                             <span class="text-lg sm:text-xl">⏹️</span>
                             <span class="text-sm sm:text-base">Stop RFID</span>
                         </button>
@@ -85,22 +81,11 @@
             <!-- Currently Active Members -->
             <div class="mb-6 sm:mb-8">
                 <div class="bg-white rounded-lg border p-4 sm:p-6 lg:p-8" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+                    <div class="mb-4 sm:mb-6">
                         <h2 class="text-xl sm:text-2xl font-bold" style="color: #1E40AF;">Currently Active Members</h2>
-                        <button onclick="refreshActiveMembers()" 
-                                class="px-4 py-2 text-white text-xs sm:text-sm rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px] w-full sm:w-auto" 
-                                style="background-color: #2563EB;" 
-                                onmouseover="this.style.backgroundColor='#1D4ED8'" 
-                                onmouseout="this.style.backgroundColor='#2563EB'">
-                            <span class="text-base sm:text-lg">🔄</span>
-                            <span class="text-xs sm:text-sm">Refresh</span>
-                        </button>
                     </div>
                     
                     <div id="active-members-list" class="space-y-3">
-                        <div class="text-center py-8" style="color: #6B7280;">
-                            <p>Loading active members...</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -121,10 +106,8 @@
                                 <option value="expired_membership">Expired Memberships</option>
                             </select>
                             <button onclick="refreshLogs()" 
-                                    class="w-full sm:w-auto px-3 sm:px-4 py-2 text-white text-xs sm:text-sm rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px]" 
-                                    style="background-color: #2563EB;" 
-                                    onmouseover="this.style.backgroundColor='#1D4ED8'" 
-                                    onmouseout="this.style.backgroundColor='#2563EB'">
+                                    class="w-full sm:w-auto px-3 sm:px-4 py-2 text-white text-xs sm:text-sm rounded-lg flex items-center justify-center gap-2 min-h-[44px]" 
+                                    style="background-color: #2563EB;">
                                 <span class="text-base sm:text-lg">🔄</span>
                                 <span class="text-xs sm:text-sm">Refresh</span>
                             </button>
@@ -144,18 +127,14 @@
                         </div>
                         <div class="flex items-center space-x-1 sm:space-x-2">
                             <button id="prev-page" onclick="changePage(-1)" 
-                                    class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                                    style="border-color: #E5E7EB; color: #6B7280;" 
-                                    onmouseover="this.style.backgroundColor='#F3F4F6'" 
-                                    onmouseout="this.style.backgroundColor='transparent'">
+                                    class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    style="border-color: #E5E7EB; color: #6B7280;">
                                 Previous
                             </button>
                             <span id="page-info" class="px-2 sm:px-4 py-2 text-xs sm:text-sm" style="color: #6B7280;">Page 1</span>
                             <button id="next-page" onclick="changePage(1)" 
-                                    class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                                    style="border-color: #E5E7EB; color: #6B7280;" 
-                                    onmouseover="this.style.backgroundColor='#F3F4F6'" 
-                                    onmouseout="this.style.backgroundColor='transparent'">
+                                    class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    style="border-color: #E5E7EB; color: #6B7280;">
                                 Next
                             </button>
                         </div>
@@ -249,7 +228,7 @@
                     
                     if (data.active_members.length === 0) {
                         console.log('📭 No active members, showing empty message');
-                        container.innerHTML = '<div class="text-center py-8" style="color: #6B7280;"><p>No active members currently</p></div>';
+                        container.innerHTML = '';
                         return;
                     }
                     
@@ -273,7 +252,7 @@
                 })
                 .catch(error => {
                     console.error('Error loading active members:', error);
-                    document.getElementById('active-members-list').innerHTML = '<div class="text-center py-8" style="color: #DC2626;"><p>Error loading active members: ' + error.message + '</p></div>';
+                    // Keep container empty on error
                 });
         }
 
@@ -460,10 +439,6 @@
             }
         }
 
-        // Refresh functions
-        function refreshActiveMembers() {
-            loadActiveMembers();
-        }
 
         function refreshLogs() {
             currentPage = 1; // Reset to first page when manually refreshing
@@ -512,7 +487,7 @@
             const originalText = button.innerHTML;
             
             // Show loading state
-            button.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Starting...';
+            button.innerHTML = '<span class="text-lg sm:text-xl">⏳</span><span class="text-sm sm:text-base">Starting...</span>';
             button.disabled = true;
             
             fetch('{{ route("rfid.start") }}', {
@@ -634,7 +609,7 @@
             const controlStatusText = document.getElementById('rfid-control-status-text');
             
             if (isRunning) {
-                controlIndicator.className = 'w-3 h-3 bg-green-500 rounded-full animate-pulse';
+                controlIndicator.className = 'w-3 h-3 bg-green-500 rounded-full';
                 controlIndicator.style.backgroundColor = '#059669';
                 controlStatusText.textContent = 'System Online';
                 controlStatusText.style.color = '#059669';
@@ -651,12 +626,11 @@
             realTimeUpdatesEnabled = true;
             updateInterval = setInterval(() => {
                 if (realTimeUpdatesEnabled) {
-                    // Update active members every 3 seconds
-                    loadActiveMembers();
                     // Update logs every 5 seconds
                     loadRfidLogs();
                     // Update dashboard stats every 10 seconds
                     loadDashboardStats();
+                    // Note: loadActiveMembers() removed to prevent flashing
                 }
             }, 5000);
             console.log('✅ Real-time updates enabled');
@@ -677,7 +651,7 @@
             const bgColor = type === 'error' ? '#DC2626' : type === 'success' ? '#059669' : '#2563EB';
             const textColor = '#FFFFFF';
             
-            notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full';
+            notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg';
             notification.style.backgroundColor = bgColor;
             notification.style.color = textColor;
             notification.style.maxWidth = '300px';
@@ -694,18 +668,10 @@
             
             document.body.appendChild(notification);
             
-            // Animate in
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
             // Auto remove after 5 seconds
             setTimeout(() => {
                 if (notification.parentElement) {
-                    notification.style.transform = 'translateX(full)';
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 300);
+                    notification.remove();
                 }
             }, 5000);
         }
@@ -788,25 +754,12 @@
                     `).join('');
                 } else {
                     console.log('ℹ️ No active members found');
-                    container.innerHTML = `
-                        <div class="text-center py-8" style="color: #6B7280;">
-                            <div class="text-6xl mb-4">👥</div>
-                            <p class="text-lg font-medium mb-2" style="color: #000000;">No active members currently</p>
-                            <p class="text-sm">Members will appear here when they check in via RFID</p>
-                        </div>
-                    `;
+                    container.innerHTML = '';
                 }
             })
             .catch(error => {
                 console.error('❌ Error loading active members:', error);
-                const container = document.getElementById('active-members-list');
-                container.innerHTML = `
-                    <div class="text-center py-8" style="color: #DC2626;">
-                        <div class="text-6xl mb-4">⚠️</div>
-                        <p class="text-lg font-medium mb-2" style="color: #DC2626;">Error loading active members</p>
-                        <p class="text-sm">Please refresh the page or check your connection</p>
-                    </div>
-                `;
+                // Keep container empty on error
             });
         }
 
@@ -871,8 +824,7 @@
             // Refresh dashboard stats every 10 seconds
             setInterval(loadDashboardStats, 10000);
             
-            // Refresh active members every 5 seconds
-            setInterval(loadActiveMembers, 5000);
+            // Note: loadActiveMembers() removed to prevent flashing
             
             // Refresh RFID logs every 10 seconds
             setInterval(loadRfidLogs, 10000);
@@ -887,7 +839,7 @@
             
             // Load initial data
             loadDashboardStats();
-            loadActiveMembers();
+            // Note: loadActiveMembers() removed to prevent flashing
             loadRfidLogs();
             checkRfidStatus();
             

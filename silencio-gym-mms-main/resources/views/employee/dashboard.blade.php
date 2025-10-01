@@ -43,13 +43,13 @@
                             </div>
                         </div>
                         
-                        <!-- Weekly Revenue -->
+                        <!-- Monthly Revenue -->
                         <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-6">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-medium text-yellow-700 mb-1">Weekly Revenue</p>
-                                    <p class="text-3xl font-bold text-yellow-900">₱{{ number_format($thisWeekRevenue, 0) }}</p>
-                                    <p class="text-xs text-yellow-600 mt-1">This week</p>
+                                    <p class="text-sm font-medium text-yellow-700 mb-1">Monthly Revenue</p>
+                                    <p class="text-3xl font-bold text-yellow-900">₱{{ number_format($thisMonthRevenue, 0) }}</p>
+                                    <p class="text-xs text-yellow-600 mt-1">This month</p>
                                 </div>
                                 <div class="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center">
                                     <span class="text-2xl font-bold text-yellow-700">₱</span>
@@ -101,7 +101,7 @@
                                         <div>
                                     <p class="text-sm font-medium text-gray-600">Expiring</p>
                                     <p class="text-2xl font-bold text-gray-900">{{ $expiringMembershipsCount }}</p>
-                                    <p class="text-xs text-gray-500">This week: {{ $expiringMembershipsThisWeek }}</p>
+                                    <p class="text-xs text-gray-500">This week: {{ $expiringMembershipsCount }}, This month: {{ $expiringMembershipsThisMonth }}</p>
                                     </div>
                                     <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                                         <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,10 +188,10 @@
                     </div>
                 </div>
 
-                        <!-- Weekly Revenue Chart -->
+                        <!-- Monthly Revenue Chart -->
                         <div class="bg-white border border-gray-200 rounded-lg p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-900">Weekly Revenue Trend</h3>
+                                <h3 class="text-lg font-semibold text-gray-900">Monthly Revenue Trend</h3>
                                 <div class="flex items-center gap-2">
                                     <!-- Calendar-style date picker -->
                                     <div class="relative">
@@ -255,7 +255,7 @@
                                 </div>
                             </div>
                             <div class="h-64">
-                                <canvas id="weeklyRevenueChart"></canvas>
+                                <canvas id="monthlyRevenueChart"></canvas>
                             </div>
                             <div class="mt-2 text-sm text-gray-500 text-center">
                                 <span id="revenueTotal">Total: ₱0</span>
@@ -409,8 +409,8 @@
                 }
             });
 
-            // Weekly Revenue Chart
-            const revenueCtx = document.getElementById('weeklyRevenueChart').getContext('2d');
+            // Monthly Revenue Chart
+            const revenueCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
             revenueChart = new Chart(revenueCtx, {
                 type: 'bar',
                 data: {
@@ -479,8 +479,10 @@
                 })
                 .catch(error => console.error('Error loading weekly attendance:', error));
 
-            // Load weekly revenue data
-            fetch(`{{ route("employee.analytics.weekly-revenue") }}?days=7`)
+            // Load monthly revenue data
+            const revenueMonth = currentRevenueDate.getMonth() + 1;
+            const revenueYear = currentRevenueDate.getFullYear();
+            fetch(`{{ route("employee.analytics.monthly-revenue") }}?month=${revenueMonth}&year=${revenueYear}`)
                 .then(response => response.json())
                 .then(data => {
                     if (revenueChart) {
@@ -491,7 +493,7 @@
                     // Update total
                     document.getElementById('revenueTotal').textContent = `Total: ₱${data.total.toLocaleString()}`;
                 })
-                .catch(error => console.error('Error loading weekly revenue:', error));
+                .catch(error => console.error('Error loading monthly revenue:', error));
 
             // Load dashboard stats
             fetch('{{ route("employee.analytics.dashboard-stats") }}')
@@ -522,7 +524,7 @@
                         expiringElement.textContent = data.expiring_memberships;
                     }
                     if (expiringSubtitle) {
-                        expiringSubtitle.textContent = `This week: ${data.expiring_memberships_this_week}`;
+                        expiringSubtitle.textContent = `This week: ${data.expiring_memberships}, This month: ${data.expiring_memberships_this_month}`;
                     }
 
                     // Update total members
@@ -531,10 +533,10 @@
                         totalMembersElement.textContent = data.total_active_members;
                     }
 
-                    // Update weekly revenue
-                    const weeklyRevenueElement = document.querySelector('.bg-gradient-to-br.from-yellow-50 .text-3xl');
-                    if (weeklyRevenueElement) {
-                        weeklyRevenueElement.textContent = '₱' + data.this_week_revenue.toLocaleString();
+                    // Update monthly revenue
+                    const monthlyRevenueElement = document.querySelector('.bg-gradient-to-br.from-yellow-50 .text-3xl');
+                    if (monthlyRevenueElement) {
+                        monthlyRevenueElement.textContent = '₱' + data.this_month_revenue.toLocaleString();
                     }
                 })
                 .catch(error => console.error('Error updating stats:', error));
@@ -801,7 +803,7 @@
         function refreshRevenueChart() {
             const month = currentRevenueDate.getMonth() + 1;
             const year = currentRevenueDate.getFullYear();
-            fetch(`{{ route("employee.analytics.weekly-revenue") }}?days=7`)
+            fetch(`{{ route("employee.analytics.monthly-revenue") }}?month=${month}&year=${year}`)
                 .then(response => response.json())
                 .then(data => {
                     if (revenueChart) {
