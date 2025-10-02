@@ -13,8 +13,8 @@
                         <div class="bg-white border rounded-lg p-4 sm:p-6" style="border-color: #059669; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs sm:text-sm font-medium mb-2" style="color: #6B7280;">Today's Check-ins</p>
-                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #059669;" id="todays-checkins">-</p>
+                                    <p class="text-xs sm:text-sm font-medium mb-2" style="color: #6B7280;">Recent Check-ins (24h)</p>
+                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #059669;" id="todays-checkins">0</p>
                                 </div>
                                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" style="background-color: #059669;">
                                     <span class="text-lg sm:text-2xl text-white">✅</span>
@@ -26,7 +26,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs sm:text-sm font-medium mb-2" style="color: #6B7280;">Expired Memberships</p>
-                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #DC2626;" id="expired-memberships">-</p>
+                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #DC2626;" id="expired-memberships">0</p>
                                 </div>
                                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" style="background-color: #DC2626;">
                                     <span class="text-lg sm:text-2xl text-white">⏰</span>
@@ -38,7 +38,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs sm:text-sm font-medium mb-2" style="color: #6B7280;">Unknown Cards</p>
-                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #8B5CF6;" id="unknown-cards">-</p>
+                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #8B5CF6;" id="unknown-cards">0</p>
                                 </div>
                                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" style="background-color: #8B5CF6;">
                                     <span class="text-lg sm:text-2xl text-white">❓</span>
@@ -74,6 +74,7 @@
                             <span class="text-lg sm:text-xl">⏹️</span>
                             <span class="text-sm sm:text-base">Stop RFID</span>
                         </button>
+                        
                     </div>
                 </div>
             </div>
@@ -84,9 +85,10 @@
                     <div class="mb-4 sm:mb-6">
                         <h2 class="text-xl sm:text-2xl font-bold" style="color: #1E40AF;">Currently Active Members</h2>
                     </div>
-                    
                     <div id="active-members-list" class="space-y-3">
-                    </div>
+                        <!-- Content will be dynamically populated by JavaScript -->
+                        </div>
+                    
                 </div>
             </div>
 
@@ -153,35 +155,43 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('RFID Monitor initialized');
-            
-            // Check RFID system status on load
-            checkRfidStatus();
+            console.log('🚀 RFID Monitor initialized');
             
             // Load initial data
             loadDashboardStats();
-            loadActiveMembers();
             loadRfidLogs();
+            checkRfidStatus();
             
-            // Auto-refresh every 1 second for real-time updates
-            setInterval(function() {
-                console.log('Auto-refreshing RFID Monitor data...');
-                loadDashboardStats();
-                loadActiveMembers();
-                loadRfidLogs(currentPage); // Maintain current page during auto-refresh
+            // Setup refresh button
+            setupRefreshButton();
+            
+            // Initialize active members list
+            loadActiveMembers();
+            
+            // Start automatic data refresh
+            startDataRefresh();
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification('RFID Monitor initialized with 1-second real-time updates', 'success');
             }, 1000);
-            
-            // Check RFID status every 10 seconds
-            setInterval(function() {
-                checkRfidStatus();
-            }, 10000);
-            
         });
 
         // Load dashboard statistics
         function loadDashboardStats() {
             console.log('🔄 Loading dashboard stats...');
-            fetch('{{ route("dashboard.stats") }}')
+            
+            try {
+                fetch('{{ route("rfid.dashboard-stats") }}', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                cache: 'no-cache'
+            })
                 .then(response => {
                     console.log('📡 Dashboard stats response status:', response.status);
                     if (!response.ok) {
@@ -190,75 +200,42 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log('📊 Dashboard stats loaded:', data);
-                    document.getElementById('today-checkins').textContent = data.today_attendance;
-                    document.getElementById('expired-memberships').textContent = data.expired_memberships_today;
-                    document.getElementById('unknown-cards').textContent = data.unknown_cards_today;
+                console.log('📊 Dashboard stats data received:', data);
+                if (data.success) {
+                    const stats = data.stats;
+                    document.getElementById('todays-checkins').textContent = stats.today_checkins || '0';
+                    document.getElementById('expired-memberships').textContent = stats.expired_memberships || '0';
+                    document.getElementById('unknown-cards').textContent = stats.unknown_cards || '0';
+                    console.log('✅ Dashboard stats updated:', stats);
+                } else {
+                    console.log('❌ Dashboard stats failed:', data.message);
+                    // Set to 0 if call fails
+                    document.getElementById('todays-checkins').textContent = '0';
+                    document.getElementById('expired-memberships').textContent = '0';
+                    document.getElementById('unknown-cards').textContent = '0';
+                }
                 })
                 .catch(error => {
-                    console.error('Error loading dashboard stats:', error);
-                    // Show error indicator
-                    document.getElementById('today-checkins').textContent = 'Error';
-                    document.getElementById('expired-memberships').textContent = 'Error';
-                    document.getElementById('unknown-cards').textContent = 'Error';
-                });
-        }
-
-        // Load active members
-        function loadActiveMembers() {
-            console.log('🔄 Loading active members...');
-            fetch('{{ route("rfid.active-members") }}')
-                .then(response => {
-                    console.log('📡 Active members response status:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('📊 Active members data received:', data);
-                    const container = document.getElementById('active-members-list');
-                    
-                    if (!data.success) {
-                        throw new Error('API returned error: ' + (data.message || 'Unknown error'));
-                    }
-                    
-                    console.log('👥 Active members count:', data.count);
-                    console.log('👥 Active members list:', data.active_members);
-                    
-                    if (data.active_members.length === 0) {
-                        console.log('📭 No active members, showing empty message');
-                        container.innerHTML = '';
-                        return;
-                    }
-                    
-                    container.innerHTML = data.active_members.map(member => `
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg border gap-3" style="background-color: #F9FAFB; border-color: #E5E7EB;">
-                            <div class="flex items-center gap-3 sm:gap-4">
-                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center" style="background-color: #059669;">
-                                    <span class="text-lg sm:text-xl text-white">✅</span>
-                                </div>
-                                <div>
-                                    <p class="text-sm sm:text-base font-semibold" style="color: #000000;">${member.name}</p>
-                                    <p class="text-xs sm:text-sm" style="color: #6B7280;">${member.membership_plan} • Checked in at ${formatTime(member.check_in_time)}</p>
-                                </div>
-                            </div>
-                            <div class="text-left sm:text-right">
-                                <p class="text-xs sm:text-sm font-medium" style="color: #059669;">${member.session_duration}</p>
-                                <p class="text-xs" style="color: #6B7280;">Session duration</p>
-                            </div>
-                        </div>
-                    `).join('');
-                })
-                .catch(error => {
-                    console.error('Error loading active members:', error);
-                    // Keep container empty on error
-                });
+                console.error('❌ Error loading dashboard stats:', error);
+                // Set to 0 on error
+                document.getElementById('todays-checkins').textContent = '0';
+                document.getElementById('expired-memberships').textContent = '0';
+                document.getElementById('unknown-cards').textContent = '0';
+            });
+            } catch (error) {
+                console.error('❌ Error in loadDashboardStats function:', error);
+                // Set to 0 on error
+                document.getElementById('todays-checkins').textContent = '0';
+                document.getElementById('expired-memberships').textContent = '0';
+                document.getElementById('unknown-cards').textContent = '0';
+            }
         }
 
         // Load RFID logs
         function loadRfidLogs(page = 1) {
             console.log('🔄 Loading RFID logs, page:', page);
+            
+            try {
             const filter = document.getElementById('log-filter').value;
             const url = new URL('{{ route("rfid.logs") }}', window.location.origin);
             
@@ -290,7 +267,13 @@
                     console.log('📋 RFID logs count:', data.logs.data.length);
                     
                     if (data.logs.data.length === 0) {
-                        container.innerHTML = '<div class="text-center py-8" style="color: #6B7280;"><p>No RFID logs found</p></div>';
+                        container.innerHTML = `
+                            <div class="text-center py-8" style="color: #6B7280;">
+                                <div class="text-6xl mb-4">📋</div>
+                                <p class="text-lg font-medium mb-2" style="color: #000000;">No RFID activity logs found</p>
+                                <p class="text-sm">Activity will appear here when RFID cards are used</p>
+                            </div>
+                        `;
                         updatePaginationInfo(data.logs);
                         return;
                     }
@@ -309,7 +292,7 @@
                                     </div>
                                     <div class="flex-1">
                                         <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                                            <p class="text-sm sm:text-base font-semibold" style="color: #000000;">${logConfig.memberName || 'Unknown Member'}</p>
+                                            <p class="text-sm sm:text-base font-semibold" style="color: #000000;">${log.member_name || logConfig.memberName || 'Unknown Member'}</p>
                                             <span class="text-xs sm:text-sm px-2 py-1 rounded-full text-white" style="background-color: ${logConfig.badgeColor};">
                                                 ${logConfig.actionText}
                                             </span>
@@ -331,6 +314,10 @@
                     console.error('Error loading RFID logs:', error);
                     document.getElementById('rfid-logs-list').innerHTML = '<div class="text-center py-8" style="color: #DC2626;"><p>Error loading RFID logs: ' + error.message + '</p></div>';
                 });
+            } catch (error) {
+                console.error('❌ Error in loadRfidLogs function:', error);
+                document.getElementById('rfid-logs-list').innerHTML = '<div class="text-center py-8" style="color: #DC2626;"><p>Error loading RFID logs: ' + error.message + '</p></div>';
+            }
         }
 
         // Get log configuration based on action and status
@@ -385,17 +372,6 @@
             };
         }
 
-        // Format time to 12-hour format with AM/PM
-        function formatTime(timeString) {
-            if (!timeString) return 'N/A';
-            const date = new Date(timeString);
-            return date.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
-                minute: '2-digit',
-                hour12: true 
-            });
-        }
-
         // Format time with full date
         function formatTimeWithDate(date) {
             return date.toLocaleDateString('en-US', { 
@@ -407,38 +383,6 @@
                 hour12: true 
                 });
         }
-
-        // Play feedback sound
-        function playFeedbackSound(type) {
-            // Create audio context for sound feedback
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                if (type === 'success') {
-                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
-                } else if (type === 'error') {
-                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.1);
-                } else if (type === 'warning') {
-                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-                }
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
-            } catch (e) {
-                console.log('Audio not supported');
-            }
-        }
-
 
         function refreshLogs() {
             currentPage = 1; // Reset to first page when manually refreshing
@@ -476,10 +420,6 @@
             loadRfidLogs();
         });
 
-        // Real-time Updates Configuration
-        let realTimeUpdatesEnabled = false;
-        let updateInterval = null;
-
         // RFID System Management Functions
         function startRfidSystem() {
             console.log('🚀 Starting RFID system...');
@@ -503,34 +443,19 @@
                     
                     if (data.success) {
                         console.log('✅ RFID system started successfully');
-                        // Immediately update status to online
                         updateRfidStatus(true, data.message);
-                        
-                        // Enable real-time updates
-                        enableRealTimeUpdates();
                         
                         // Refresh data after starting
                         setTimeout(() => {
                             loadDashboardStats();
-                            loadActiveMembers();
                             loadRfidLogs();
                         }, 2000);
                         
-                        // Show success notification
                         showNotification('RFID system started successfully', 'success');
                     } else {
                         console.log('❌ RFID startup response:', data.message);
-                        
-                        // Don't show error notification if it's a hardware detection issue
-                        if (data.message.includes('hardware not detected')) {
-                            console.log('⚠️ Hardware detection warning ignored - continuing startup');
-                            updateRfidStatus(true, 'RFID system starting...');
-                            enableRealTimeUpdates();
-                            showNotification('RFID system starting (hardware detection in progress)', 'info');
-                        } else {
                         updateRfidStatus(false, data.message);
                             showNotification('Failed to start RFID: ' + data.message, 'error');
-                        }
                     }
                 })
                 .catch(error => {
@@ -544,7 +469,6 @@
                     button.disabled = false;
                 });
         }
-
         
         function checkRfidStatus() {
             fetch('{{ route("rfid.status") }}')
@@ -566,10 +490,9 @@
             const originalText = button.innerHTML;
             
             // Show loading state
-            button.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Stopping...';
+            button.innerHTML = '<span class="text-lg sm:text-xl">⏳</span><span class="text-sm sm:text-base">Stopping...</span>';
             button.disabled = true;
             
-            // Stop Python processes
             fetch('{{ route("rfid.stop") }}', {
                 method: 'POST',
                 headers: {
@@ -584,8 +507,6 @@
                     if (data.success) {
                         console.log('✅ RFID system stopped successfully');
                         updateRfidStatus(false, data.message);
-                        // Disable real-time updates
-                        disableRealTimeUpdates();
                     } else {
                         console.log('❌ Failed to stop RFID system:', data.message);
                         updateRfidStatus(true, data.message);
@@ -621,34 +542,300 @@
             }
         }
 
-        // Real-time Update Functions
-        function enableRealTimeUpdates() {
-            realTimeUpdatesEnabled = true;
-            updateInterval = setInterval(() => {
-                if (realTimeUpdatesEnabled) {
-                    // Update logs every 5 seconds
-                    loadRfidLogs();
-                    // Update dashboard stats every 10 seconds
-                    loadDashboardStats();
-                    // Note: loadActiveMembers() removed to prevent flashing
+        // Real-time data refresh intervals
+        function startDataRefresh() {
+            console.log('🔄 Starting data refresh intervals...');
+            
+            // Refresh dashboard stats every 1 second for near real-time updates
+            setInterval(loadDashboardStats, 1000);
+            
+            // Refresh RFID logs every 1 second for near real-time updates
+            setInterval(loadRfidLogs, 1000);
+            
+            // Refresh active members every 1 second for real-time updates
+            setInterval(loadActiveMembers, 1000);
+            
+            // Check RFID status every 10 seconds (reduced from 30 seconds)
+            setInterval(checkRfidStatus, 10000);
+        }
+        
+        // Active members state management
+        let activeMembersState = {
+            lastUpdate: 0,
+            currentMembers: [],
+            isLoading: false,
+            retryCount: 0,
+            maxRetries: 3
+        };
+
+        // Load active members with debouncing and error handling
+        function loadActiveMembers() {
+            try {
+                const now = Date.now();
+                const timeSinceLastUpdate = now - activeMembersState.lastUpdate;
+            
+            // Debounce: Don't update more than once every 500ms for real-time updates
+            if (timeSinceLastUpdate < 500 && activeMembersState.currentMembers.length > 0) {
+                console.log('🔄 Active members update debounced');
+                return;
+            }
+            
+            // Prevent concurrent requests
+            if (activeMembersState.isLoading) {
+                console.log('🔄 Active members request already in progress');
+                return;
+            }
+            
+            activeMembersState.isLoading = true;
+            console.log('🔄 Loading active members...');
+            
+            fetch('{{ route("rfid.active-members") }}', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-            }, 5000);
-            console.log('✅ Real-time updates enabled');
+                return response.json();
+            })
+            .then(data => {
+                activeMembersState.isLoading = false;
+                activeMembersState.retryCount = 0;
+                
+                if (data.success && Array.isArray(data.members)) {
+                    // Only update if data has actually changed
+                    const membersChanged = JSON.stringify(data.members) !== JSON.stringify(activeMembersState.currentMembers);
+                    
+                    if (membersChanged) {
+                        console.log('🔄 Active members data changed, updating UI');
+                        activeMembersState.currentMembers = data.members;
+                        activeMembersState.lastUpdate = now;
+                        updateActiveMembersList(data.members);
+                } else {
+                        console.log('🔄 Active members data unchanged, skipping UI update');
+                    }
+                } else {
+                    console.error('Failed to load active members:', data.message || 'Invalid response format');
+                    // Don't clear existing data on error, just log it
+                }
+            })
+            .catch(error => {
+                activeMembersState.isLoading = false;
+                console.error('Error loading active members:', error);
+                
+                // Retry logic with exponential backoff
+                if (activeMembersState.retryCount < activeMembersState.maxRetries) {
+                    activeMembersState.retryCount++;
+                    const retryDelay = Math.pow(2, activeMembersState.retryCount) * 1000; // 2s, 4s, 8s
+                    console.log(`🔄 Retrying active members request in ${retryDelay}ms (attempt ${activeMembersState.retryCount})`);
+                    
+                    setTimeout(() => {
+                        loadActiveMembers();
+                    }, retryDelay);
+                } else {
+                    console.error('🔄 Max retries reached for active members request');
+                    // Show error notification but don't clear existing data
+                    showNotification('Failed to update active members list', 'error');
+                }
+            });
+            } catch (error) {
+                console.error('❌ Error in loadActiveMembers function:', error);
+                // Don't show notification for function errors to avoid spam
+            }
         }
 
-        function disableRealTimeUpdates() {
-            realTimeUpdatesEnabled = false;
-            if (updateInterval) {
-                clearInterval(updateInterval);
-                updateInterval = null;
+        // Update active members list in the UI with smooth transitions
+        function updateActiveMembersList(members) {
+            try {
+                const activeMembersList = document.getElementById('active-members-list');
+                
+                if (!activeMembersList) return;
+            
+            // Check if we need to update at all
+            const currentCount = activeMembersList.children.length;
+            const newCount = members ? members.length : 0;
+            
+            // If count is the same and we have members, check if content is actually different
+            if (currentCount === newCount && newCount > 0) {
+                const currentContent = activeMembersList.innerHTML;
+                const newContent = members.map(member => createActiveMemberElement(member).outerHTML).join('');
+                
+                if (currentContent === newContent) {
+                    console.log('🔄 Active members UI content unchanged, skipping update');
+                    return;
+                }
             }
-            console.log('❌ Real-time updates disabled');
+            
+            // Add loading state
+            activeMembersList.style.opacity = '0.7';
+            activeMembersList.style.transition = 'opacity 0.3s ease';
+            
+            // Use requestAnimationFrame for smooth updates
+            requestAnimationFrame(() => {
+                // Clear existing content
+                activeMembersList.innerHTML = '';
+                
+                if (members && members.length > 0) {
+                    
+                    // Add each active member with staggered animation
+                    members.forEach((member, index) => {
+                        const memberElement = createActiveMemberElement(member);
+                        memberElement.style.opacity = '0';
+                        memberElement.style.transform = 'translateY(10px)';
+                        memberElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        
+                        activeMembersList.appendChild(memberElement);
+                        
+                        // Stagger the animation
+                        setTimeout(() => {
+                            memberElement.style.opacity = '1';
+                            memberElement.style.transform = 'translateY(0)';
+                        }, index * 100);
+                    });
+                } else {
+                    // Show "no active members" message
+                    const noMembersElement = document.createElement('div');
+                    noMembersElement.className = 'text-center py-8';
+                    noMembersElement.style.color = '#6B7280';
+                    noMembersElement.style.opacity = '0';
+                    noMembersElement.style.transition = 'opacity 0.3s ease';
+                    noMembersElement.innerHTML = `
+                        <div class="text-6xl mb-4">👥</div>
+                        <p class="text-lg font-medium mb-2" style="color: #000000;">No active members currently</p>
+                    `;
+                    activeMembersList.appendChild(noMembersElement);
+                    
+                    // Animate in
+                    setTimeout(() => {
+                        noMembersElement.style.opacity = '1';
+                    }, 100);
+                    
+                }
+                
+                // Restore full opacity
+                setTimeout(() => {
+                    activeMembersList.style.opacity = '1';
+                }, 300);
+                
+            });
+            } catch (error) {
+                console.error('❌ Error in updateActiveMembersList function:', error);
+            }
+        }
+
+        // Create active member element
+        function createActiveMemberElement(member) {
+            const memberDiv = document.createElement('div');
+            memberDiv.className = 'bg-white border rounded-lg p-4 sm:p-6';
+            memberDiv.style.borderColor = '#E5E7EB';
+            memberDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+            
+            // Calculate session duration
+            const checkInTime = new Date(member.check_in_time);
+            const now = new Date();
+            const durationMs = now - checkInTime;
+            const hours = Math.floor(durationMs / (1000 * 60 * 60));
+            const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+            
+            let durationText = '';
+            if (hours > 0) {
+                durationText = `${hours}h ${minutes}m ${seconds}s`;
+            } else if (minutes > 0) {
+                durationText = `${minutes}m ${seconds}s`;
+            } else {
+                durationText = `${seconds}s`;
+            }
+            
+            memberDiv.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <span class="text-green-600 text-lg">👤</span>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-semibold text-gray-900">${member.full_name || member.first_name + ' ' + member.last_name}</h3>
+                            <p class="text-xs sm:text-sm text-gray-500">Member #${member.member_number}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs sm:text-sm text-gray-500">Check-in:</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-900">${checkInTime.toLocaleTimeString()}</p>
+                        <p class="text-xs text-green-600 font-medium">${durationText}</p>
+                    </div>
+                </div>
+            `;
+            
+            return memberDiv;
+        }
+        
+        // Manual refresh function for immediate updates
+        function manualRefresh() {
+            console.log('🔄 Manual refresh triggered');
+            
+            loadDashboardStats();
+            loadRfidLogs();
+            loadActiveMembers();
+            checkRfidStatus();
+            showNotification('Dashboard refreshed', 'success');
+        }
+
+        // Add event listener for refresh button
+        function setupRefreshButton() {
+            const refreshButton = document.getElementById('refresh-logs-btn');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    manualRefresh();
+                });
+            }
+        }
+
+        // Show Brave-specific instructions
+        function showBraveInstructions() {
+            const instructions = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg p-6 max-w-md w-full">
+                        <div class="text-center mb-4">
+                            <div class="text-4xl mb-2">🦁</div>
+                            <h3 class="text-lg font-semibold">Enable NFC in Brave Browser</h3>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-4">
+                            <p class="mb-3">Brave browser blocks NFC by default for security. To enable it:</p>
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li>Open <code class="bg-gray-100 px-1 rounded">brave://flags</code> in your address bar</li>
+                                <li>Search for "Web NFC"</li>
+                                <li>Enable the "Web NFC" flag</li>
+                                <li>Restart Brave browser</li>
+                                <li>Return to this page and try NFC again</li>
+                            </ol>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                                Close
+                            </button>
+                            <button onclick="window.open('brave://flags', '_blank')" 
+                                    class="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
+                                Open Flags
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', instructions);
         }
 
         // Notification System
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            const bgColor = type === 'error' ? '#DC2626' : type === 'success' ? '#059669' : '#2563EB';
+            const bgColor = type === 'error' ? '#DC2626' : type === 'success' ? '#059669' : type === 'warning' ? '#D97706' : '#2563EB';
             const textColor = '#FFFFFF';
             
             notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg';
@@ -675,183 +862,7 @@
                 }
             }, 5000);
         }
-
-        // Load Dashboard Stats Function
-        function loadDashboardStats() {
-            console.log('🔄 Loading dashboard stats...');
-            fetch('{{ route("rfid.dashboard-stats") }}', {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => {
-                console.log('📡 Dashboard stats response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('📊 Dashboard stats data received:', data);
-                if (data.success) {
-                    const stats = data.stats;
-                    document.getElementById('today-checkins').textContent = stats.today_checkins || '0';
-                    document.getElementById('expired-memberships').textContent = stats.expired_memberships || '0';
-                    document.getElementById('unknown-cards').textContent = stats.unknown_cards || '0';
-                    console.log('✅ Dashboard stats updated:', stats);
-                } else {
-                    console.log('❌ Dashboard stats failed:', data.message);
-                    // Set to 0 if call fails
-                    document.getElementById('today-checkins').textContent = '0';
-                    document.getElementById('expired-memberships').textContent = '0';
-                    document.getElementById('unknown-cards').textContent = '0';
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error loading dashboard stats:', error);
-                // Set to 0 on error
-                document.getElementById('today-checkins').textContent = '0';
-                document.getElementById('expired-memberships').textContent = '0';
-                document.getElementById('unknown-cards').textContent = '0';
-            });
-        }
-
-        // Load Active Members Function
-        function loadActiveMembers() {
-            console.log('🔄 Loading active members...');
-            fetch('{{ route("rfid.active-members") }}', {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => {
-                console.log('📡 Active members response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('👥 Active members data received:', data);
-                const container = document.getElementById('active-members-list');
-                
-                if (data.success && data.active_members && data.active_members.length > 0) {
-                    console.log('✅ Displaying', data.active_members.length, 'active members');
-                    container.innerHTML = data.active_members.map(member => `
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border" style="border-color: #E5E7EB;">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-600">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="font-medium text-sm" style="color: #000000;">${member.name}</p>
-                                    <p class="text-xs" style="color: #6B7280;">${member.membership_plan} • Checked in at ${member.check_in_time}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xs font-medium" style="color: #059669;">${member.session_duration}</p>
-                                <p class="text-xs" style="color: #6B7280;">Active</p>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    console.log('ℹ️ No active members found');
-                    container.innerHTML = '';
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error loading active members:', error);
-                // Keep container empty on error
-            });
-        }
-
-        // Load RFID Logs Function
-        function loadRfidLogs(page = 1) {
-            const filter = document.getElementById('log-filter').value;
-            const url = `{{ route('rfid.logs') }}?page=${page}${filter ? '&action=' + filter : ''}`;
-            
-            fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('rfid-logs-list');
-                
-                if (data.success && data.logs.data.length > 0) {
-                    container.innerHTML = data.logs.data.map(log => {
-                        const config = getLogConfig(log.action, log.status);
-                        return `
-                            <div class="flex items-center justify-between p-3 bg-white rounded-lg border hover:bg-gray-50 transition-colors" style="border-color: #E5E7EB;">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background-color: ${config.bgColor};">
-                                        <span class="text-white text-xs">${config.icon}</span>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-sm" style="color: #000000;">${log.message}</p>
-                                        <p class="text-xs" style="color: #6B7280;">${formatTimeWithDate(new Date(log.timestamp))}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-white" style="background-color: ${config.badgeColor};">
-                                        ${config.actionText}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                    
-                    updatePaginationInfo(data.logs);
-                } else {
-                    container.innerHTML = `
-                        <div class="text-center py-8" style="color: #6B7280;">
-                            <div class="text-6xl mb-4">📋</div>
-                            <p class="text-lg font-medium mb-2" style="color: #000000;">No RFID activity logs found</p>
-                            <p class="text-sm">Activity will appear here when RFID cards are used</p>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error loading RFID logs:', error);
-            });
-        }
-
-        // Real-time data refresh intervals
-        function startDataRefresh() {
-            console.log('🔄 Starting data refresh intervals...');
-            
-            // Refresh dashboard stats every 10 seconds
-            setInterval(loadDashboardStats, 10000);
-            
-            // Note: loadActiveMembers() removed to prevent flashing
-            
-            // Refresh RFID logs every 10 seconds
-            setInterval(loadRfidLogs, 10000);
-            
-            // Check RFID status every 30 seconds
-            setInterval(checkRfidStatus, 30000);
-        }
-        
-        // Initialize page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Initializing RFID Monitor...');
-            
-            // Load initial data
-            loadDashboardStats();
-            // Note: loadActiveMembers() removed to prevent flashing
-            loadRfidLogs();
-            checkRfidStatus();
-            
-            // Start automatic data refresh
-            startDataRefresh();
-            
-            // Show welcome notification
-            setTimeout(() => {
-                showNotification('RFID Monitor initialized successfully', 'success');
-            }, 1000);
-        });
-
-
     </script>
+
+
 </x-layout>

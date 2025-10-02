@@ -27,6 +27,17 @@ class RfidController extends Controller
      */
     public function handleCardTap(Request $request): JsonResponse
     {
+        // Debug: Log the incoming request
+        Log::info('RFID tap request received', [
+            'all_input' => $request->all(),
+            'json' => $request->json()->all(),
+            'raw_content' => $request->getContent(),
+            'content_type' => $request->header('Content-Type'),
+            'method' => $request->method(),
+            'url' => $request->url(),
+            'headers' => $request->headers->all()
+        ]);
+        
         $request->validate([
             'uid' => 'required_without:card_uid',
             'card_uid' => 'required_without:uid',
@@ -294,13 +305,19 @@ class RfidController extends Controller
         
         while ($retryCount < $maxRetries) {
             try {
+                // Find member by UID to get member_id
+                $member = Member::where('uid', $cardUid)->first();
+                
                 RfidLog::create([
                     'card_uid' => $cardUid,
+                    'member_id' => $member ? $member->id : null,
+                    'member_name' => $member ? "{$member->first_name} {$member->last_name}" : null,
                     'action' => $action,
                     'status' => $status,
                     'message' => $message,
                     'timestamp' => now(),
                     'device_id' => $deviceId,
+                    'source' => 'rfid',
                 ]);
                 return; // Success, exit the retry loop
             } catch (\Exception $e) {
@@ -322,31 +339,6 @@ class RfidController extends Controller
         }
     }
 
-    /**
-     * Get current active members
-     */
-    public function getActiveMembers(): JsonResponse
-    {
-        $activeMembers = ActiveSession::with(['member:id,first_name,last_name,uid,current_plan_type'])
-            ->active()
-            ->get()
-            ->map(function ($session) {
-                return [
-                    'id' => $session->member->id,
-                    'name' => $session->member->first_name . ' ' . $session->member->last_name,
-                    'uid' => $session->member->uid,
-                    'membership_plan' => $session->member->current_plan_type === 'vip' ? 'VIP' : ucfirst($session->member->current_plan_type ?? 'Unknown'),
-                    'check_in_time' => $session->check_in_time->format('h:i:s A'),
-                    'session_duration' => $session->currentDuration,
-                ];
-            });
-
-        return response()->json([
-            'success' => true,
-            'active_members' => $activeMembers,
-            'count' => $activeMembers->count(),
-        ]);
-    }
 
     /**
      * Manually trigger auto tap-out for all active members
@@ -440,6 +432,7 @@ class RfidController extends Controller
     public function getRfidLogs(Request $request): JsonResponse
     {
         $logs = RfidLog::query()
+            ->with('member') // Include member relationship
             ->when($request->input('status'), function ($query, $status) {
                 return $query->where('status', $status);
             })
@@ -452,9 +445,29 @@ class RfidController extends Controller
             ->orderBy('timestamp', 'desc')
             ->paginate(10);
 
+        // Transform logs to include member information
+        $transformedLogs = $logs->getCollection()->map(function ($log) {
+            return [
+                'id' => $log->id,
+                'card_uid' => $log->card_uid,
+                'action' => $log->action,
+                'status' => $log->status,
+                'message' => $log->message,
+                'timestamp' => $log->timestamp,
+                'member_name' => $log->member ? ($log->member->first_name . ' ' . $log->member->last_name) : 'Unknown Member',
+                'member_id' => $log->member_id,
+            ];
+        });
+
         return response()->json([
             'success' => true,
-            'logs' => $logs,
+            'logs' => [
+                'data' => $transformedLogs,
+                'current_page' => $logs->currentPage(),
+                'last_page' => $logs->lastPage(),
+                'per_page' => $logs->perPage(),
+                'total' => $logs->total(),
+            ],
         ]);
     }
 
@@ -932,12 +945,19 @@ class RfidController extends Controller
     public function getDashboardStats(): JsonResponse
     {
         try {
+            // Use last 24 hours for "today's" check-ins to handle timezone issues
+            $last24Hours = now()->subDay();
             $today = now()->startOfDay();
             $thisWeekStart = now()->startOfWeek();
             $thisMonthStart = now()->startOfMonth();
 
-            // Today's check-ins
-            $todayCheckins = Attendance::whereDate('check_in_time', $today)
+            // Today's check-ins - use last 24 hours to include recent activity
+            $todayCheckins = Attendance::where('check_in_time', '>=', $last24Hours)
+                ->where('status', 'checked_in')
+                ->count();
+
+            // Also get actual today's count for comparison
+            $actualTodayCheckins = Attendance::whereDate('check_in_time', today())
                 ->where('status', 'checked_in')
                 ->count();
 
@@ -945,10 +965,22 @@ class RfidController extends Controller
             $expiredMemberships = Member::where('membership_expires_at', '<', now())
                 ->count();
 
-            // Unknown cards today
-            $unknownCardsToday = RfidLog::whereDate('timestamp', $today)
+            // Unknown cards in last 24 hours
+            $unknownCardsToday = RfidLog::where('timestamp', '>=', $last24Hours)
                 ->where('action', 'unknown_card')
                 ->count();
+
+            // Debug logging
+            Log::info('Dashboard stats calculated', [
+                'today_checkins' => $todayCheckins,
+                'actual_today_checkins' => $actualTodayCheckins,
+                'expired_memberships' => $expiredMemberships,
+                'unknown_cards' => $unknownCardsToday,
+                'last_24_hours_start' => $last24Hours->toDateTimeString(),
+                'today_date' => today()->toDateString(),
+                'now_time' => now()->toDateTimeString(),
+                'timezone' => now()->timezone->getName()
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -969,6 +1001,156 @@ class RfidController extends Controller
                     'expired_memberships' => 0,
                     'unknown_cards' => 0,
                 ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Get currently active members with transaction handling
+     */
+    public function getActiveMembers(): JsonResponse
+    {
+        try {
+            // Use database transaction to ensure consistent reads
+            $activeMembers = DB::transaction(function () {
+                return ActiveSession::with('member')
+                    ->where('status', 'active')
+                    ->orderBy('check_in_time', 'desc')
+                    ->lockForUpdate() // Prevent concurrent modifications
+                    ->get()
+                    ->map(function ($session) {
+                        // Validate that member exists and is not null
+                        if (!$session->member) {
+                            Log::warning('Active session found without associated member', [
+                                'session_id' => $session->id,
+                                'member_id' => $session->member_id
+                            ]);
+                            return null;
+                        }
+
+                        return [
+                            'id' => $session->member->id,
+                            'first_name' => $session->member->first_name,
+                            'last_name' => $session->member->last_name,
+                            'full_name' => $session->member->first_name . ' ' . $session->member->last_name,
+                            'email' => $session->member->email,
+                            'member_number' => $session->member->member_number,
+                            'check_in_time' => $session->check_in_time,
+                            'session_id' => $session->id,
+                        ];
+                    })
+                    ->filter() // Remove null entries
+                    ->values(); // Re-index array
+            });
+            
+            // Log consistency check
+            Log::info('Active members retrieved', [
+                'count' => $activeMembers->count(),
+                'method' => 'getActiveMembers',
+                'members' => $activeMembers->pluck('member_number')->toArray()
+            ]);
+
+            // Add cache headers to prevent browser caching issues
+            $response = response()->json([
+                'success' => true,
+                'members' => $activeMembers,
+                'count' => $activeMembers->count(),
+                'timestamp' => now()->toISOString()
+            ]);
+
+            $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
+
+            return $response;
+
+        } catch (\Exception $e) {
+            Log::error('Error getting active members: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load active members',
+                'members' => [],
+                'count' => 0,
+                'timestamp' => now()->toISOString()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check for data consistency between isInGym() and getActiveMembers()
+     */
+    public function checkDataConsistency(): JsonResponse
+    {
+        try {
+            $inconsistencies = [];
+            
+            // Get all members
+            $members = Member::all();
+            
+            // Get active members from getActiveMembers logic
+            $activeSessions = ActiveSession::with('member')
+                ->where('status', 'active')
+                ->get();
+            
+            $activeMemberIds = $activeSessions
+                ->filter(function ($session) {
+                    return $session->member !== null;
+                })
+                ->pluck('member_id')
+                ->unique()
+                ->toArray();
+            
+            // Check each member
+            foreach ($members as $member) {
+                $isInGym = $member->isInGym();
+                $inActiveMembers = in_array($member->id, $activeMemberIds);
+                
+                if ($isInGym !== $inActiveMembers) {
+                    $inconsistencies[] = [
+                        'member_id' => $member->id,
+                        'member_number' => $member->member_number,
+                        'member_name' => $member->first_name . ' ' . $member->last_name,
+                        'isInGym' => $isInGym,
+                        'inActiveMembers' => $inActiveMembers,
+                        'inconsistency_type' => $isInGym ? 'member_shows_in_gym_but_not_in_admin' : 'member_shows_not_in_gym_but_in_admin'
+                    ];
+                }
+            }
+            
+            // Log inconsistencies
+            if (!empty($inconsistencies)) {
+                Log::warning('Data consistency issues detected', [
+                    'inconsistencies' => $inconsistencies,
+                    'total_members' => $members->count(),
+                    'inconsistent_members' => count($inconsistencies)
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'consistent' => empty($inconsistencies),
+                'inconsistencies' => $inconsistencies,
+                'total_members' => $members->count(),
+                'inconsistent_count' => count($inconsistencies),
+                'timestamp' => now()->toISOString()
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error checking data consistency: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check data consistency',
+                'consistent' => false,
+                'inconsistencies' => [],
+                'timestamp' => now()->toISOString()
             ], 500);
         }
     }
