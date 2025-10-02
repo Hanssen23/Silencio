@@ -102,7 +102,37 @@ class EmployeeController extends Controller
         // Get paginated results
         $payments = $query->orderBy('created_at', 'desc')->paginate(15);
         
-        return view('employee.payments.index', compact('payments'));
+        // Get summary statistics for all completed payments (not just current page)
+        $completedPayments = Payment::where('status', 'completed');
+        
+        // Apply same filters to summary statistics
+        if ($search) {
+            $completedPayments->where(function($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhereHas('member', function($memberQuery) use ($search) {
+                      $memberQuery->where('first_name', 'like', "%{$search}%")
+                                  ->orWhere('last_name', 'like', "%{$search}%")
+                                  ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        if ($planType) {
+            $completedPayments->where('plan_type', $planType);
+        }
+        
+        if ($date) {
+            $completedPayments->whereDate('created_at', $date);
+        }
+        
+        if ($status) {
+            $completedPayments->where('status', $status);
+        }
+        
+        $completedCount = $completedPayments->count();
+        $totalRevenue = $completedPayments->sum('amount');
+        
+        return view('employee.payments', compact('payments', 'completedCount', 'totalRevenue'));
     }
 
     // Employee Membership Methods

@@ -11,16 +11,26 @@ class RfidLog extends Model
 
     protected $fillable = [
         'card_uid',
+        'member_id',
         'action',
         'status',
         'message',
         'timestamp',
         'device_id',
+        'source',
     ];
 
     protected $casts = [
         'timestamp' => 'datetime',
     ];
+
+    /**
+     * Get the member associated with this RFID log
+     */
+    public function member()
+    {
+        return $this->belongsTo(Member::class);
+    }
 
     /**
      * Scope for successful events

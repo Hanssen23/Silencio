@@ -200,8 +200,10 @@ class AccountController extends Controller
     /**
      * Show the form for editing an account
      */
-    public function edit(Request $request, User $user)
+    public function edit(Request $request, $id)
     {
+        $user = User::findOrFail($id);
+        
         // Check if this is an employee request
         if (request()->is('employee/*')) {
             // Employees can only edit their own account
@@ -219,9 +221,10 @@ class AccountController extends Controller
     /**
      * Update the specified account
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
         $currentUser = auth()->user();
+        $user = User::findOrFail($id);
         
         // Check if this is an employee request
         if (request()->is('employee/*')) {
@@ -358,10 +361,13 @@ class AccountController extends Controller
     /**
      * Remove the specified account
      */
-    public function destroy(Request $request, User $user)
+    public function destroy(Request $request, $id)
     {
         try {
             $currentUser = auth()->user();
+            
+            // Find the user to delete
+            $user = User::findOrFail($id);
             
             // Check if this is an employee request
             if (request()->is('employee/*')) {
@@ -442,7 +448,7 @@ class AccountController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'current_user_id' => auth()->id(),
-                'target_user_id' => $user->id ?? 'unknown'
+                'target_user_id' => $id ?? 'unknown'
             ]);
             
             if ($request->expectsJson()) {
@@ -458,8 +464,10 @@ class AccountController extends Controller
     /**
      * Toggle account status (activate/deactivate)
      */
-    public function toggleStatus(Request $request, User $user)
+    public function toggleStatus(Request $request, $id)
     {
+        $user = User::findOrFail($id);
+        
         // Check if this is an employee request
         if (request()->is('employee/*')) {
             // Employees cannot toggle account status

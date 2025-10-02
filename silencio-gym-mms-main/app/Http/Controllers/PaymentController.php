@@ -35,7 +35,37 @@ class PaymentController extends Controller
         }
         
         $payments = $query->orderBy('created_at', 'desc')->paginate(15);
-        return view('membership.payments.index', compact('payments'));
+        
+        // Get summary statistics for all completed payments (not just current page)
+        $completedPayments = Payment::where('status', 'completed');
+        
+        // Apply same filters to summary statistics
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $completedPayments->whereHas('member', function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('member_number', 'like', "%{$search}%");
+            })->orWhere('id', 'like', "%{$search}%");
+        }
+        
+        if ($request->filled('plan_type')) {
+            $completedPayments->where('plan_type', $request->plan_type);
+        }
+        
+        if ($request->filled('status')) {
+            $completedPayments->where('status', $request->status);
+        }
+        
+        if ($request->filled('date')) {
+            $completedPayments->whereDate('payment_date', $request->date);
+        }
+        
+        $completedCount = $completedPayments->count();
+        $totalRevenue = $completedPayments->sum('amount');
+        
+        return view('membership.payments.index', compact('payments', 'completedCount', 'totalRevenue'));
     }
 
     public function create()
@@ -164,13 +194,11 @@ class PaymentController extends Controller
     {
         $payment = Payment::with('member')->findOrFail($id);
         
+        $html = view('membership.payments.details', compact('payment'))->render();
+        
         return response()->json([
             'success' => true,
-            'payment' => $payment,
-            'membership_period' => [
-                'start_date' => $payment->membership_start_date,
-                'end_date' => $payment->membership_expiration_date
-            ]
+            'html' => $html
         ]);
     }
 }

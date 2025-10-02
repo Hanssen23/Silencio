@@ -32,6 +32,10 @@ Route::get('/csrf-token', function() {
 Route::get('/register', [MemberAuthController::class, 'showRegister'])->name('member.register');
 Route::post('/register', [MemberAuthController::class, 'register'])->name('member.register.post');
 
+// Public RFID Routes (for hardware integration) - bypass all middleware
+Route::post('/rfid/tap', [RfidController::class, 'handleCardTap'])->withoutMiddleware(['web', 'auth']);
+Route::get('/rfid/logs-public', [RfidController::class, 'getRfidLogs'])->withoutMiddleware(['web', 'auth']);
+
 // Public pages
 Route::get('/terms', function () {
     return view('terms');
@@ -118,6 +122,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}/edit', [AccountController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AccountController::class, 'update'])->name('update');
         Route::delete('/{id}', [AccountController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [AccountController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/bulk-action', [AccountController::class, 'bulkAction'])->name('bulk-action');
     });
 
     // Employee Routes
@@ -181,12 +187,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/duration-types', [EmployeeController::class, 'getDurationTypes'])->name('duration-types');
         });
     });
-});
-
-// Public RFID Routes
-Route::prefix('rfid')->group(function () {
-    Route::get('/logs-public', [RfidController::class, 'getRfidLogs']);
-    Route::get('/active-members-public', [RfidController::class, 'getActiveMembers']);
 });
 
 // Member routes (member guard)

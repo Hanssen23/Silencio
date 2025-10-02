@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
+        'rfid/tap', // Exclude RFID tap route from CSRF protection
         'rfid/*', // Exclude all RFID routes from CSRF protection
     ];
 }

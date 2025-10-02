@@ -69,30 +69,32 @@
                             <div id="password-confirmation-error" class="text-red-500 text-sm mt-1 hidden"></div>
                         </div>
                         
-                        <div>
-                            <label for="account-role" class="block text-sm font-medium mb-2" style="color: #6B7280; font-size: 0.875rem;">User Type</label>
-                            <select id="account-role" name="role" required
-                                    class="w-full px-3 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    style="border-color: #E5E7EB; background-color: #F9FAFB; color: #000000; font-size: 1rem;">
-                                <option value="">Select user type</option>
-                                <option value="admin">Admin</option>
-                                <option value="employee">Employee</option>
-                            </select>
-                            <div id="role-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                        </div>
-                        
-                        <div class="sm:col-span-2 lg:col-span-3 xl:col-span-5 flex justify-end">
-                            <button type="submit" id="create-account-btn"
-                                    class="w-full sm:w-auto px-4 sm:px-6 py-3 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center gap-2"
-                                    style="background-color: #2563EB; border-radius: 6px;">
-                                <span id="create-account-text">Create Account</span>
-                                <div id="create-account-spinner" class="hidden">
-                                    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </div>
-                            </button>
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <label for="account-role" class="block text-sm font-medium mb-2" style="color: #6B7280; font-size: 0.875rem;">User Type</label>
+                                <select id="account-role" name="role" required
+                                        class="w-full px-3 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        style="border-color: #E5E7EB; background-color: #F9FAFB; color: #000000; font-size: 1rem;">
+                                    <option value="">Select user type</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="employee">Employee</option>
+                                </select>
+                                <div id="role-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                            </div>
+                            
+                            <div class="flex items-end" style="margin-top: 24px;">
+                                <button type="submit" id="create-account-btn"
+                                        class="px-6 py-3 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center gap-2 whitespace-nowrap"
+                                        style="background-color: #2563EB; border-radius: 6px; height: 48px; min-width: 140px;">
+                                    <span id="create-account-text">Create Account</span>
+                                    <div id="create-account-spinner" class="hidden">
+                                        <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -618,13 +620,16 @@
         async function loadAccounts() {
             try {
                 console.log('Loading accounts...');
-                const response = await fetch('/accounts', {
+                // Add cache busting parameter
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/accounts?t=${timestamp}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Cache-Control': 'no-cache'
                     }
                 });
 
@@ -642,8 +647,10 @@
                 console.log('Load accounts response data:', result);
                 
                 if (response.ok) {
+                    console.log('Accounts loaded successfully:', result.accounts);
                     accountsData = result.accounts || [];
                     renderAccountsTable();
+                    console.log('Accounts table rendered with', accountsData.length, 'accounts');
                 } else {
                     console.error('Failed to load accounts:', result);
                     showNotification('Failed to load accounts: ' + (result.message || 'Unknown error'), 'error');
@@ -660,10 +667,12 @@
 
         // Render accounts table
         function renderAccountsTable() {
+            console.log('Rendering accounts table with', accountsData.length, 'accounts');
             const tbody = document.getElementById('accounts-table-body');
             tbody.innerHTML = '';
 
             if (accountsData.length === 0) {
+                console.log('No accounts to display');
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="3" class="px-6 py-4 text-center text-gray-500">
@@ -917,7 +926,10 @@
 
                 if (result.success) {
                     showNotification(result.message, 'success');
-                    loadAccounts(); // Refresh the accounts list
+                    // Force immediate refresh with cache busting
+                    setTimeout(() => {
+                        loadAccounts();
+                    }, 100);
                 } else {
                     showNotification(result.message || 'Failed to delete account', 'error');
                 }
