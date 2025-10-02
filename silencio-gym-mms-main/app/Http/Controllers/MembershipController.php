@@ -92,55 +92,58 @@ class MembershipController extends Controller
         ]);
 
         try {
-            // Calculate expiration date
-            $startDate = Carbon::parse($request->start_date);
-            $durationTypes = config('membership.duration_types');
-            $durationDays = $durationTypes[$request->duration_type]['days'];
-            $expirationDate = $startDate->copy()->addDays($durationDays);
+            // Use database transaction for faster processing
+            \DB::transaction(function () use ($request, &$payment, &$membershipPeriod) {
+                // Calculate expiration date
+                $startDate = Carbon::parse($request->start_date);
+                $durationTypes = config('membership.duration_types');
+                $durationDays = $durationTypes[$request->duration_type]['days'];
+                $expirationDate = $startDate->copy()->addDays($durationDays);
+                $now = now()->setTimezone('Asia/Manila');
 
-            // Create payment record with Manila time
-            $payment = Payment::create([
-                'member_id' => $request->member_id,
-                'amount' => $request->amount,
-                'payment_date' => now()->setTimezone('Asia/Manila')->toDateString(),
-                'payment_time' => now()->setTimezone('Asia/Manila')->format('H:i:s'),
-                'status' => 'completed',
-                'plan_type' => $request->plan_type,
-                'duration_type' => $request->duration_type,
-                'membership_start_date' => $startDate->setTimezone('Asia/Manila'),
-                'membership_expiration_date' => $expirationDate->setTimezone('Asia/Manila'),
-                'notes' => $request->notes,
-                'tin' => $request->tin,
-                'is_pwd' => $request->is_pwd ?? false,
-                'is_senior_citizen' => $request->is_senior_citizen ?? false,
-                'discount_amount' => $request->discount_amount ?? 0.00,
-                'discount_percentage' => $request->discount_percentage ?? 0.00,
-            ]);
+                // Create payment record with optimized data
+                $payment = Payment::create([
+                    'member_id' => $request->member_id,
+                    'amount' => $request->amount,
+                    'payment_date' => $now->toDateString(),
+                    'payment_time' => $now->format('H:i:s'),
+                    'status' => 'completed',
+                    'plan_type' => $request->plan_type,
+                    'duration_type' => $request->duration_type,
+                    'membership_start_date' => $startDate,
+                    'membership_expiration_date' => $expirationDate,
+                    'notes' => $request->notes,
+                    'tin' => $request->tin ?? null,
+                    'is_pwd' => $request->is_pwd ?? false,
+                    'is_senior_citizen' => $request->is_senior_citizen ?? false,
+                    'discount_amount' => $request->discount_amount ?? 0.00,
+                    'discount_percentage' => $request->discount_percentage ?? 0.00,
+                ]);
 
-            // Create membership period
-            $membershipPeriod = MembershipPeriod::create([
-                'member_id' => $request->member_id,
-                'payment_id' => $payment->id,
-                'plan_type' => $request->plan_type,
-                'duration_type' => $request->duration_type,
-                'start_date' => $startDate,
-                'expiration_date' => $expirationDate,
-                'status' => 'active',
-                'notes' => $request->notes,
-            ]);
+                // Create membership period
+                $membershipPeriod = MembershipPeriod::create([
+                    'member_id' => $request->member_id,
+                    'payment_id' => $payment->id,
+                    'plan_type' => $request->plan_type,
+                    'duration_type' => $request->duration_type,
+                    'start_date' => $startDate,
+                    'expiration_date' => $expirationDate,
+                    'status' => 'active',
+                    'notes' => $request->notes,
+                ]);
 
-            // Update member's current membership
-            $member = Member::find($request->member_id);
-            $member->update([
-                'current_membership_period_id' => $membershipPeriod->id,
-                'membership_starts_at' => $startDate,
-                'membership_expires_at' => $expirationDate,
-                'current_plan_type' => $request->plan_type,
-                'current_duration_type' => $request->duration_type,
-                'membership' => $request->plan_type, // Set membership type automatically
-                'subscription_status' => 'active',
-                'status' => 'active',
-            ]);
+                // Update member's current membership in single query
+                Member::where('id', $request->member_id)->update([
+                    'current_membership_period_id' => $membershipPeriod->id,
+                    'membership_starts_at' => $startDate,
+                    'membership_expires_at' => $expirationDate,
+                    'current_plan_type' => $request->plan_type,
+                    'current_duration_type' => $request->duration_type,
+                    'membership' => $request->plan_type,
+                    'subscription_status' => 'active',
+                    'status' => 'active',
+                ]);
+            });
 
             return response()->json([
                 'success' => true,

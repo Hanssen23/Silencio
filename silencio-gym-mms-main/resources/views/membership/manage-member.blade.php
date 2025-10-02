@@ -283,21 +283,30 @@
                     <div class="text-6xl mb-6">✅</div>
                     <h3 class="text-3xl font-bold mb-4" style="color: #059669;">Payment Successful!</h3>
                     <p class="text-lg mb-8" style="color: #6B7280;">Membership has been activated successfully.</p>
-                    <div class="flex justify-center space-x-6">
+                    <p class="text-sm mb-4" style="color: #9CA3AF;">Redirecting to payments list in 1 second...</p>
+                    <div class="flex justify-center space-x-4">
                         <button onclick="resetForm()" 
-                                class="inline-flex items-center px-8 py-4 text-white rounded-lg transition-colors shadow-sm" 
+                                class="inline-flex items-center px-6 py-3 text-white rounded-lg transition-colors shadow-sm" 
                                 style="background-color: #059669;" 
                                 onmouseover="this.style.backgroundColor='#047857'" 
                                 onmouseout="this.style.backgroundColor='#059669'">
-                            <span class="text-xl mr-2">➕</span>
+                            <span class="text-lg mr-2">➕</span>
                             Process Another Payment
                         </button>
+                        <button onclick="printReceipt()" 
+                                class="inline-flex items-center px-6 py-3 text-white rounded-lg transition-colors shadow-sm" 
+                                style="background-color: #DC2626;" 
+                                onmouseover="this.style.backgroundColor='#B91C1C'" 
+                                onmouseout="this.style.backgroundColor='#DC2626'">
+                            <span class="text-lg mr-2">🖨️</span>
+                            Print Receipt
+                        </button>
                         <a href="{{ route('membership.payments.index') }}" 
-                           class="inline-flex items-center px-8 py-4 text-white rounded-lg transition-colors shadow-sm" 
+                           class="inline-flex items-center px-6 py-3 text-white rounded-lg transition-colors shadow-sm" 
                            style="background-color: #2563EB;" 
                            onmouseover="this.style.backgroundColor='#1D4ED8'" 
                            onmouseout="this.style.backgroundColor='#2563EB'">
-                            <span class="text-xl mr-2">👁️</span>
+                            <span class="text-lg mr-2">👁️</span>
                             View All Payments
                         </a>
                     </div>
@@ -491,9 +500,11 @@
 
             // Create modal
             const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4';
             modal.innerHTML = `
-                <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto" style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+                <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-auto transform transition-all duration-300 scale-95 opacity-0 border border-gray-200" 
+                     id="receiptModalContent"
+                     style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);">
                     <!-- Modal Header -->
                     <div class="flex justify-between items-center p-4 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-900">Payment Receipt</h3>
@@ -505,7 +516,7 @@
                     </div>
 
                     <!-- Receipt Content -->
-                    <div class="p-6">
+                    <div class="p-4 sm:p-6">
                         <!-- Header Section -->
                         <div class="text-center mb-6">
                             <img src="{{ asset('images/rba-logo/rba logo.png') }}" alt="RBA Logo" class="w-24 h-auto mx-auto mb-4" style="width: 100px; height: auto;">
@@ -613,19 +624,50 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex justify-end p-6 border-t border-gray-200 bg-gray-50">
-                        <button onclick="processPayment()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <div class="flex flex-col sm:flex-row justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50">
+                        <button onclick="closeReceiptPreview()" class="w-full sm:w-auto px-4 py-2 bg-gray-100 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium">
+                            Cancel
+                        </button>
+                        <button onclick="processPayment()" class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium">
                             Confirm Payment & Activate Membership
                         </button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
+            
+            // Add click outside to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeReceiptPreview();
+                }
+            });
+            
+            // Trigger animation
+            setTimeout(() => {
+                const content = document.getElementById('receiptModalContent');
+                if (content) {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }
+            }, 10);
         }
 
         function closeReceiptPreview() {
             const modal = document.querySelector('.fixed.inset-0');
-            if (modal) {
+            const content = document.getElementById('receiptModalContent');
+            
+            if (content) {
+                // Trigger close animation
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                
+                setTimeout(() => {
+                    if (modal) {
+                        modal.remove();
+                    }
+                }, 300);
+            } else if (modal) {
                 modal.remove();
             }
         }
@@ -665,6 +707,14 @@
                 if (data.success) {
                     document.getElementById('planSelectionForm').classList.add('hidden');
                     document.getElementById('successMessage').classList.remove('hidden');
+                    
+                    // Store payment ID for receipt generation
+                    window.lastPaymentId = data.payment_id;
+                    
+                    // Auto-close receipt modal after 1 second and redirect to payments
+                    setTimeout(() => {
+                        window.location.href = '{{ route("membership.payments.index") }}';
+                    }, 1000);
                 } else {
                     alert('Error: ' + data.message);
                     confirmBtn.innerHTML = originalText;
@@ -720,6 +770,19 @@
             document.getElementById('priceBreakdown').textContent = 'Select plan and duration';
             document.getElementById('paymentAmount').value = '';
             document.getElementById('confirmPaymentBtn').disabled = true;
+            
+            // Clear payment ID
+            window.lastPaymentId = null;
+        }
+
+        function printReceipt() {
+            if (window.lastPaymentId) {
+                // Open receipt in new window for printing
+                const receiptUrl = `/membership/payments/${window.lastPaymentId}/print`;
+                window.open(receiptUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+            } else {
+                alert('No payment ID available for receipt generation');
+            }
         }
     </script>
 </x-layout>

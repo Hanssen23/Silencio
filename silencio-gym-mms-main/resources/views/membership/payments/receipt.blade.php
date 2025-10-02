@@ -28,12 +28,43 @@
         
         .receipt {
             width: 100%;
-            max-width: 28rem; /* 448px */
+            max-width: 90vw; /* Responsive width */
             margin: 0 auto;
             background: white;
             padding: 1.5rem;
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Responsive breakpoints */
+        @media (min-width: 640px) {
+            .receipt {
+                max-width: 32rem; /* 512px */
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .receipt {
+                max-width: 36rem; /* 576px */
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .receipt {
+                max-width: 40rem; /* 640px */
+            }
+        }
+        
+        @media (min-width: 1280px) {
+            .receipt {
+                max-width: 44rem; /* 704px */
+            }
+        }
+        
+        @media (min-width: 1536px) {
+            .receipt {
+                max-width: 48rem; /* 768px */
+            }
         }
         
         .header {

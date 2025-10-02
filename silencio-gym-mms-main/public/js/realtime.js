@@ -99,8 +99,8 @@ class RealtimeManager {
         // Update immediately
         updateTaps();
         
-        // Update every 5 seconds
-        this.tapInterval = setInterval(updateTaps, 5000);
+        // Update every 1 second for near real-time updates
+        this.tapInterval = setInterval(updateTaps, 1000);
     }
 
     // Update Active Members

@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class Member extends Authenticatable
@@ -77,6 +78,11 @@ class Member extends Authenticatable
     public function activeSessions(): HasMany
     {
         return $this->hasMany(ActiveSession::class);
+    }
+
+    public function rfidLogs(): HasMany
+    {
+        return $this->hasMany(RfidLog::class);
     }
 
     public function getIsActiveAttribute(): bool
@@ -314,10 +320,21 @@ class Member extends Authenticatable
      */
     public function isInGym(): bool
     {
-        return $this->activeSessions()
+        $hasActiveSession = $this->activeSessions()
             ->where('status', 'active')
             ->whereNull('check_out_time')
             ->exists();
+            
+        // Log consistency check
+        if ($hasActiveSession) {
+            Log::info('Member marked as in gym', [
+                'member_id' => $this->id,
+                'member_number' => $this->member_number,
+                'method' => 'isInGym'
+            ]);
+        }
+        
+        return $hasActiveSession;
     }
 
     /**

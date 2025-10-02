@@ -44,7 +44,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium" style="color: #059669;">Completed</p>
-                                    <p class="text-3xl font-bold" style="color: #000000;">{{ $payments->where('status', 'completed')->count() }}</p>
+                                    <p class="text-3xl font-bold" style="color: #000000;">{{ $completedCount }}</p>
                                 </div>
                             </div>
                         </div>
@@ -56,7 +56,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium" style="color: #059669;">Total Revenue</p>
-                                    <p class="text-3xl font-bold" style="color: #000000;">₱{{ number_format($payments->where('status', 'completed')->sum('amount'), 2) }}</p>
+                                    <p class="text-3xl font-bold" style="color: #000000;">₱{{ number_format($totalRevenue, 2) }}</p>
                                 </div>
                             </div>
                         </div>

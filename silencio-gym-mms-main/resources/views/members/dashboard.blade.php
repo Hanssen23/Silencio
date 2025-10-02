@@ -122,6 +122,8 @@
                              <div class="bg-white rounded-lg p-4">
                                  <p class="text-sm text-gray-500 text-center">Not currently in gym</p>
                                  <p class="text-xs text-gray-400 text-center mt-1">Tap your RFID card to check in</p>
+                                 
+                                 
                                  <div class="mt-2 text-center">
                                      <span class="text-sm text-gray-600">Current Time:</span>
                                      <span class="text-sm font-medium text-gray-900" id="current-time">{{ now()->format('M d, Y g:i A') }}</span>
@@ -428,6 +430,353 @@
             // Update days remaining every minute
             setInterval(updateDaysRemaining, 60000);
         });
+    </script>
+
+
+    <!-- Member NFC Integration Script -->
+    <script>
+        // NFC Support Detection for Members
+        let memberNfcSupported = false;
+        let memberNfcReader = null;
+
+        // Check NFC support on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkMemberNfcSupport();
+            setupMemberFloatingButton();
+            setupMemberBraveHelp();
+        });
+
+        // Browser detection for members
+        async function detectMemberBrowser() {
+            const userAgent = navigator.userAgent;
+            
+            // Check for Brave browser
+            if (navigator.brave) {
+                try {
+                    const isBrave = await navigator.brave.isBrave();
+                    if (isBrave) {
+                        return 'brave';
+                    }
+                } catch (error) {
+                    console.log('Brave detection failed:', error);
+                }
+            }
+            
+            // Fallback to user agent detection
+            if (userAgent.includes('Chrome')) {
+                return 'chrome';
+            } else if (userAgent.includes('Firefox')) {
+                return 'firefox';
+            } else if (userAgent.includes('Safari')) {
+                return 'safari';
+            } else {
+                return 'unknown';
+            }
+        }
+
+        // Check if Web NFC is supported
+        async function checkMemberNfcSupport() {
+            try {
+                const browser = await detectMemberBrowser();
+                console.log('🌐 Member browser detected:', browser);
+                
+                if ('NDEFReader' in window) {
+                    memberNfcSupported = true;
+                    console.log('✅ Web NFC is supported for member dashboard');
+                    
+                    // Check for Brave-specific issues
+                    if (browser === 'brave') {
+                        console.log('🦁 Brave browser detected - checking NFC configuration');
+                        
+                        // Check if we're on HTTPS
+                        if (location.protocol !== 'https:') {
+                            console.log('⚠️ Brave requires HTTPS for NFC');
+                            showMemberNotification('NFC requires HTTPS in Brave browser. Please use HTTPS or enable NFC in brave://flags', 'warning');
+                        }
+                    }
+                    
+                    // Show floating button on mobile devices
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('member-floating-nfc-btn').classList.remove('hidden');
+                    }
+                } else {
+                    memberNfcSupported = false;
+                    console.log('❌ Web NFC is not supported for member dashboard');
+                    
+                    if (browser === 'brave') {
+                        console.log('🦁 Brave browser - NFC may be disabled in flags');
+                        showMemberNotification('NFC is disabled in Brave. Enable it in brave://flags/#enable-web-nfc', 'info');
+                    }
+                    
+                    // Hide NFC button if not supported
+                    const nfcButton = document.getElementById('member-nfc-checkin-btn');
+                    if (nfcButton) {
+                        nfcButton.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                memberNfcSupported = false;
+                console.log('❌ Web NFC check failed:', error);
+            }
+        }
+
+        // Setup floating button visibility
+        function setupMemberFloatingButton() {
+            // Show floating button on mobile devices if NFC is supported
+            if (memberNfcSupported && window.innerWidth <= 768) {
+                document.getElementById('member-floating-nfc-btn').classList.remove('hidden');
+            }
+        }
+
+        // Setup member Brave help section
+        async function setupMemberBraveHelp() {
+            try {
+                const browser = await detectMemberBrowser();
+                const braveHelpSection = document.getElementById('member-brave-help-section');
+                
+                if (braveHelpSection && browser === 'brave' && !memberNfcSupported) {
+                    braveHelpSection.classList.remove('hidden');
+                } else if (braveHelpSection) {
+                    braveHelpSection.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('❌ Error in setupMemberBraveHelp function:', error);
+            }
+        }
+
+        // Show member Brave-specific instructions
+        function showMemberBraveInstructions() {
+            const instructions = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg p-6 max-w-md w-full">
+                        <div class="text-center mb-4">
+                            <div class="text-4xl mb-2">🦁</div>
+                            <h3 class="text-lg font-semibold">Enable NFC in Brave Browser</h3>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-4">
+                            <p class="mb-3">Brave browser blocks NFC by default for security. To enable it:</p>
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li>Open <code class="bg-gray-100 px-1 rounded">brave://flags</code> in your address bar</li>
+                                <li>Search for "Web NFC"</li>
+                                <li>Enable the "Web NFC" flag</li>
+                                <li>Restart Brave browser</li>
+                                <li>Return to this page and try NFC again</li>
+                            </ol>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                                Close
+                            </button>
+                            <button onclick="window.open('brave://flags', '_blank')" 
+                                    class="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
+                                Open Flags
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', instructions);
+        }
+
+        // Start member NFC check-in
+        async function startMemberNfcCheckIn() {
+            try {
+                const browser = await detectMemberBrowser();
+                console.log('🌐 Starting member NFC check-in on:', browser);
+                
+                if (!memberNfcSupported) {
+                    if (browser === 'brave') {
+                        showMemberNotification('NFC is disabled in Brave. Enable it in brave://flags/#enable-web-nfc', 'error');
+                    } else {
+                        showMemberNotification('NFC is not supported on this device', 'error');
+                    }
+                    return;
+                }
+
+                const button = document.getElementById('member-nfc-checkin-btn');
+                const floatingButton = document.getElementById('member-floating-nfc-btn');
+                const originalText = button ? button.innerHTML : '';
+                
+                if (button) {
+                    button.innerHTML = '<span class="text-lg sm:text-xl">⏳</span><span class="text-sm sm:text-base">Scanning...</span>';
+                    button.disabled = true;
+                }
+
+                try {
+                    // Brave-specific checks
+                    if (browser === 'brave') {
+                        // Check HTTPS requirement
+                        if (location.protocol !== 'https:') {
+                            throw new Error('Brave requires HTTPS for NFC. Please use HTTPS or enable NFC in brave://flags');
+                        }
+                        
+                        // Check if NFC is enabled in flags
+                        console.log('🦁 Brave browser - checking NFC configuration');
+                    }
+                    
+                    // Request NFC permission
+                    memberNfcReader = new NDEFReader();
+                    await memberNfcReader.scan();
+                    
+                    showMemberNotification('NFC ready! Tap your phone to an NFC tag', 'success');
+                    
+                    // Listen for NFC reads
+                    memberNfcReader.addEventListener('reading', handleMemberNfcRead);
+                    memberNfcReader.addEventListener('readingerror', handleMemberNfcError);
+                    
+                } catch (error) {
+                    console.error('Member NFC Error:', error);
+                    
+                    // Brave-specific error handling
+                    if (browser === 'brave') {
+                        if (error.message.includes('HTTPS')) {
+                            showMemberNotification('Brave requires HTTPS for NFC. Please use HTTPS or enable NFC in brave://flags', 'error');
+                        } else if (error.message.includes('permission')) {
+                            showMemberNotification('NFC permission denied in Brave. Check brave://flags/#enable-web-nfc', 'error');
+                        } else {
+                            showMemberNotification('NFC error in Brave: ' + error.message + '. Check brave://flags/#enable-web-nfc', 'error');
+                        }
+                    } else {
+                        showMemberNotification('NFC access denied or error: ' + error.message, 'error');
+                    }
+                    
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error in startMemberNfcCheckIn function:', error);
+                showMemberNotification('Error initializing NFC: ' + error.message, 'error');
+            }
+        }
+
+        // Handle member NFC read event
+        function handleMemberNfcRead(event) {
+            console.log('Member NFC Tag detected:', event);
+            
+            try {
+                // Extract UID from NFC tag
+                let uid = '';
+                if (event.serialNumber) {
+                    // Convert serial number to hex string
+                    uid = Array.from(event.serialNumber)
+                        .map(byte => byte.toString(16).padStart(2, '0'))
+                        .join('')
+                        .toUpperCase();
+                } else {
+                    // Generate a mock UID for testing
+                    uid = 'NFC' + Date.now().toString(16).substr(-8).toUpperCase();
+                }
+
+                console.log('Member NFC UID:', uid);
+                
+                // Send to RFID API endpoint
+                sendMemberNfcToRfidApi(uid);
+                
+            } catch (error) {
+                console.error('Error processing member NFC read:', error);
+                showMemberNotification('Error processing NFC tag: ' + error.message, 'error');
+            }
+        }
+
+        // Handle member NFC read error
+        function handleMemberNfcError(event) {
+            console.error('Member NFC Read Error:', event);
+            showMemberNotification('NFC read error: ' + event.message, 'error');
+        }
+
+        // Send member NFC data to RFID API
+        async function sendMemberNfcToRfidApi(uid) {
+            try {
+                const response = await fetch('{{ route("rfid.tap") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        card_uid: uid,
+                        device_id: 'nfc_member',
+                        source: 'nfc'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMemberNotification('NFC check-in successful!', 'success');
+                    
+                    // Refresh the page to show updated status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                } else {
+                    showMemberNotification('NFC check-in failed: ' + (data.message || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Member API Error:', error);
+                showMemberNotification('Failed to process NFC check-in: ' + error.message, 'error');
+            }
+        }
+
+        // Show member notification
+        function showMemberNotification(message, type) {
+            const bgColor = type === 'success' ? '#059669' : type === 'warning' ? '#D97706' : type === 'info' ? '#2563EB' : '#DC2626';
+            const textColor = '#FFFFFF';
+            
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg';
+            notification.style.backgroundColor = bgColor;
+            notification.style.color = textColor;
+            notification.style.maxWidth = '300px';
+            notification.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Reset member NFC buttons after use
+        function resetMemberNfcButtons() {
+            const button = document.getElementById('member-nfc-checkin-btn');
+            
+            if (button) {
+                button.innerHTML = '<span class="text-lg sm:text-xl">📱</span><span class="text-sm sm:text-base">Tap Phone to Check-In</span>';
+                button.disabled = false;
+            }
+        }
+
+        // Handle window resize for floating button
+        window.addEventListener('resize', function() {
+            const floatingBtn = document.getElementById('member-floating-nfc-btn');
+            if (window.innerWidth <= 768 && memberNfcSupported) {
+                floatingBtn.classList.remove('hidden');
+            } else {
+                floatingBtn.classList.add('hidden');
+            }
+        });
+
+        // Auto-reset NFC buttons after 30 seconds
+        setTimeout(resetMemberNfcButtons, 30000);
     </script>
 </x-layout>
 

@@ -1,4 +1,10 @@
-@props(['isEmployee' => false])
+﻿@props(['isEmployee' => false, 'payments' => null, 'completedCount' => 0, 'totalRevenue' => 0])
+@php
+    if (!isset($payments) || !$payments) {
+        $payments = collect();
+    }
+@endphp
+
 
 <x-layout>
     @if($isEmployee)
@@ -46,22 +52,24 @@
                         <div class="bg-white border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow" style="border-color: #059669; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                             <div class="flex items-center">
                                 <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mr-3 sm:mr-4" style="background-color: #059669;">
-                                    <span class="text-xl sm:text-2xl">✅</span>
+                                    <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #000000;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                    </svg>
                                 </div>
                                 <div>
                                     <p class="text-xs sm:text-sm font-medium" style="color: #059669;">Completed</p>
-                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #000000;">{{ $payments->where('status', 'completed')->count() }}</p>
+                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #000000;">{{ $completedCount }}</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-white border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow" style="border-color: #DC2626; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div class="bg-white border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow" style="border-color: #1E40AF; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                             <div class="flex items-center">
-                                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mr-3 sm:mr-4" style="background-color: #DC2626;">
-                                    <span class="text-xl sm:text-2xl">❌</span>
+                                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mr-3 sm:mr-4" style="background-color: #1E40AF;">
+                                    <span class="text-xl sm:text-2xl font-bold" style="color: #FFFFFF;">₱</span>
                                 </div>
                                 <div>
-                                    <p class="text-xs sm:text-sm font-medium" style="color: #DC2626;">Pending</p>
-                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #000000;">{{ $payments->where('status', 'pending')->count() }}</p>
+                                    <p class="text-xs sm:text-sm font-medium" style="color: #1E40AF;">Total Revenue</p>
+                                    <p class="text-2xl sm:text-3xl font-bold" style="color: #000000;">₱{{ number_format($totalRevenue, 2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -114,64 +122,89 @@
             <!-- Payments Table -->
             <div class="bg-white rounded-lg shadow-sm border overflow-hidden" style="border-color: #E5E7EB; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 <div class="payments-table-container overflow-x-auto">
-                    <table class="payments-table w-full" style="min-width: 1200px;">
+                    <table class="payments-table w-full" style="min-width: 1400px;">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 120px; min-width: 120px;">Payment ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 150px; min-width: 150px;">Member</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px; min-width: 100px;">Plan Type</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px; min-width: 100px;">Amount</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 120px; min-width: 120px;">Date</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px; min-width: 100px;">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px; min-width: 100px;">Actions</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 200px; min-width: 200px;">MEMBER</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 150px; min-width: 150px;">PLAN & DURATION</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 120px; min-width: 120px;">AMOUNT</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 150px; min-width: 150px;">PAYMENT DATE</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px; min-width: 100px;">STATUS</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 200px; min-width: 200px;">MEMBERSHIP PERIOD</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px; min-width: 100px;">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($payments as $payment)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        #{{ $payment->id }}
+                                    <!-- MEMBER -->
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-3" style="background-color: #E3F2FD;">
+                                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-900">{{ $payment->member->first_name ?? 'N/A' }} {{ $payment->member->last_name ?? 'N/A' }}</div>
+                                                <div class="text-sm text-gray-500">{{ $payment->member->email ?? 'N/A' }}</div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        {{ $payment->member->first_name ?? 'N/A' }} {{ $payment->member->last_name ?? 'N/A' }}
+                                    
+                                    <!-- PLAN & DURATION -->
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <div>
+                                            <span class="font-semibold">{{ ucfirst($payment->plan_type) }}</span>
+                                            <span class="text-gray-400 mx-1">+</span>
+                                            <span class="font-semibold">{{ ucfirst($payment->duration_type) }}</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                            @if($payment->plan_type === 'vip') bg-purple-100 text-purple-800
-                                            @elseif($payment->plan_type === 'premium') bg-blue-100 text-blue-800
-                                            @else bg-gray-100 text-gray-800
-                                            @endif">
-                                            {{ ucfirst($payment->plan_type) }}
-                                        </span>
+                                    
+                                    <!-- AMOUNT -->
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <div class="font-bold">₱{{ number_format($payment->amount, 2) }}</div>
                                     </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        ₱{{ number_format($payment->amount, 2) }}
+                                    
+                                    <!-- PAYMENT DATE -->
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <div>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('M d, Y') : 'N/A' }}</div>
+                                        <div class="text-sm text-gray-500">{{ $payment->payment_time ? \Carbon\Carbon::parse($payment->payment_time)->format('h:i:s A') : 'N/A' }}</div>
                                     </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        {{ $payment->created_at->format('M d, Y') }}
-                                    </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                            @if($payment->status === 'completed') bg-green-100 text-green-800
-                                            @elseif($payment->status === 'pending') bg-yellow-100 text-yellow-800
-                                            @else bg-red-100 text-red-800
-                                            @endif">
+                                    
+                                    <!-- STATUS -->
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                             {{ ucfirst($payment->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        <div class="action-buttons flex flex-row gap-2 items-center justify-start" style="min-width: 80px;">
-                                            <button onclick="viewPaymentDetails({{ $payment->id }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="View Details" aria-label="View payment details">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
-                                            </button>
-                                            <a href="{{ $isEmployee ? route('employee.membership.payments.print', $payment->id) : route('membership.payments.print', $payment->id) }}" class="p-2 text-gray-600 hover:bg-gray-50 rounded-md transition-colors" title="Print Receipt" aria-label="Print payment receipt">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                                                </svg>
-                                            </a>
+                                    
+                                    <!-- MEMBERSHIP PERIOD -->
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        @if($payment->membership_start_date && $payment->membership_expiration_date)
+                                            <div>{{ \Carbon\Carbon::parse($payment->membership_start_date)->format('M d, Y') }} – {{ \Carbon\Carbon::parse($payment->membership_expiration_date)->format('M d, Y') }}</div>
+                                            @php
+                                                $expirationDate = \Carbon\Carbon::parse($payment->membership_expiration_date);
+                                                $now = \Carbon\Carbon::now();
+                                                $daysLeft = $expirationDate->diffInDays($now);
+                                                
+                                                // Ensure positive whole number
+                                                if ($daysLeft < 0) {
+                                                    $daysLeft = abs($daysLeft);
+                                                }
+                                                $daysLeft = (int) $daysLeft;
+                                            @endphp
+                                            <div class="text-sm text-green-600">{{ $daysLeft }} days left</div>
+                                        @else
+                                            <div class="text-gray-500">N/A</div>
+                                        @endif
+                                    </td>
+                                    
+                                    <!-- ACTIONS -->
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-3">
+                                            <button onclick="viewPaymentDetails({{ $payment->id }})" class="text-blue-600 hover:text-blue-900 font-medium" title="View Details">View</button>
+                                            <a href="{{ $isEmployee ? route('employee.membership.payments.print', $payment->id) : route('membership.payments.print', $payment->id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-medium" title="Print Receipt">Print</a>
                                         </div>
                                     </td>
                                 </tr>
@@ -187,7 +220,7 @@
                 </div>
 
                 <!-- Pagination -->
-                @if($payments->hasPages())
+                @if(method_exists($payments, 'hasPages') && $payments->hasPages())
                     <div class="pagination-container bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                         {{ $payments->links() }}
                     </div>
@@ -195,12 +228,14 @@
             </div>
 
             <!-- Payment Details Modal -->
-            <div id="paymentDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-                <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
-                    <div class="mt-3">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-medium text-gray-900">Payment Details</h3>
-                            <button onclick="closePaymentDetailsModal()" class="text-gray-400 hover:text-gray-600">
+            <div id="paymentDetailsModal" class="fixed inset-0 flex items-center justify-center p-2 sm:p-4 hidden z-50">
+                <div class="bg-white rounded-xl shadow-lg max-w-6xl w-full transform transition-all duration-300 scale-95 opacity-0 border border-gray-200" 
+                     id="paymentDetailsModalContent"
+                     style="box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); max-height: 90vh; overflow-y: auto;">
+                    <div class="p-4 sm:p-6">
+                        <div class="flex items-center justify-between mb-4 sm:mb-6">
+                            <h3 class="text-lg sm:text-xl font-semibold text-gray-900">Payment Details</h3>
+                            <button onclick="closePaymentDetailsModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
@@ -261,7 +296,7 @@
 .payments-table {
     table-layout: fixed;
     width: 100%;
-    min-width: 1200px;
+    min-width: 1400px;
 }
 
 .action-buttons {
@@ -286,6 +321,12 @@
 .action-buttons button:hover {
     background-color: rgba(59, 130, 246, 0.1);
     border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+@media (max-width: 1600px) {
+    .payments-table {
+        min-width: 1200px;
+    }
 }
 
 @media (max-width: 1400px) {
@@ -406,7 +447,18 @@ function viewPaymentDetails(paymentId) {
         .then(data => {
             if (data.success) {
                 document.getElementById('paymentDetailsContent').innerHTML = data.html;
-                document.getElementById('paymentDetailsModal').classList.remove('hidden');
+                
+                // Show modal with animation
+                const modal = document.getElementById('paymentDetailsModal');
+                const content = document.getElementById('paymentDetailsModalContent');
+                
+                modal.classList.remove('hidden');
+                
+                // Trigger animation
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
             } else {
                 alert('Error loading payment details');
             }
@@ -418,7 +470,16 @@ function viewPaymentDetails(paymentId) {
 }
 
 function closePaymentDetailsModal() {
-    document.getElementById('paymentDetailsModal').classList.add('hidden');
+    const modal = document.getElementById('paymentDetailsModal');
+    const content = document.getElementById('paymentDetailsModalContent');
+    
+    // Trigger close animation
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 // Close modal when clicking outside

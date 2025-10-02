@@ -29,8 +29,10 @@
         <script src="{{ asset('js/dropdown.js') }}"></script>
         <!-- Sidebar JavaScript -->
         <script src="{{ asset('js/sidebar.js') }}"></script>
-        <!-- Real-time Features JavaScript -->
+        <!-- Real-time Features JavaScript - Disabled for RFID Monitor to prevent conflicts -->
+        @if(!request()->is('rfid-monitor'))
         <script src="{{ asset('js/realtime.js') }}"></script>
+        @endif
         
         <!-- Mobile Sidebar Toggle Script -->
         <script>
